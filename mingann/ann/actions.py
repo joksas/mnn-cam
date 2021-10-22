@@ -8,7 +8,7 @@ DATASET = "mnist"
 MODELS_DIR = "models"
 MODEL_PATH = os.path.join(MODELS_DIR, "model.h5")
 INFO_PATH = os.path.join(MODELS_DIR, "info.pkl")
-MAX_NUM_EPOCHS = 1000
+MAX_NUM_EPOCHS = 10
 
 
 def train():
@@ -18,6 +18,7 @@ def train():
 
     callbacks = [
             tf.keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=25, restore_best_weights=True),
+            tf.keras.callbacks.ModelCheckpoint(MODEL_PATH, monitor='val_accuracy', save_best_only=True, save_weights_only=True),
             ]
 
     history = model.fit(
@@ -34,5 +35,10 @@ def train():
             "batch_size": data.BATCH_SIZE,
             }
 
-    with open(INFO_PATH) as handle:
+    with open(INFO_PATH, "wb") as handle:
         pickle.dump(info, handle)
+
+
+def infer():
+    model = architecture.get_model(DATASET, custom_weights_path=MODEL_PATH, is_training=False)
+    model.evaluate(data.load(DATASET, "testing"))
