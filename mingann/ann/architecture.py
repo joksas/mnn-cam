@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from . import mapping, crossbar
+from mingann import crossbar
 
 
 class MemristorDense(layers.Dense):
@@ -26,14 +26,14 @@ class MemristorDense(layers.Dense):
 
         # Mapping inputs onto voltages.
         k_V = 1.0
-        V = mapping.x_to_V(inputs, k_V)
+        V = crossbar.map.x_to_V(inputs, k_V)
 
         # Mapping weights onto conductances.
-        G, max_weight = mapping.w_to_G(weights, self.conductance_levels)
+        G, max_weight = crossbar.map.w_to_G(weights, self.conductance_levels)
 
         # Ideal case for computing output currents.
-        I = crossbar.compute_ideal_I(V, G)
+        I = crossbar.compute.ideal_I(V, G)
 
-        y_disturbed = mapping.I_to_y(I, k_V, max_weight, self.conductance_levels)
+        y_disturbed = crossbar.map.I_to_y(I, k_V, max_weight, self.conductance_levels)
 
         return y_disturbed

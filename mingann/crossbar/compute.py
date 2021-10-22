@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def compute_ideal_I(V, G):
+def ideal_I(V, G):
     """Computes output currents of an ideal crossbar.
 
     Parameters

@@ -1,8 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import pytest
-from mingann import mapping
-from . import utils
+from mingann import crossbar
+from tests import utils
 
 
 w_to_G_testdata = [
@@ -66,6 +66,6 @@ w_to_G_testdata = [
 @pytest.mark.parametrize("args,expected", w_to_G_testdata)
 def test_w_to_G(args, expected):
     G_exp, max_weight_exp = expected
-    G, max_weight = mapping.w_to_G(**args)
+    G, max_weight = crossbar.map.w_to_G(**args)
     utils.assert_tf_approx(G, G_exp)
     assert max_weight == max_weight_exp
