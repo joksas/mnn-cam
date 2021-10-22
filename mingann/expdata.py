@@ -20,3 +20,11 @@ def load_retention_voltages():
     retention_voltages = load_retention_table().iloc[:1000, 1]
     retention_voltages = np.array(retention_voltages)
     return retention_voltages
+
+
+def load_retention_conductances():
+    retention_voltages = load_retention_voltages()
+    abs_retention_voltages = np.abs(retention_voltages)
+    retention_currents = load_retention_currents()
+    retention_conductances  = retention_currents/abs_retention_voltages[:, None]
+    return retention_conductances
