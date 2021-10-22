@@ -129,5 +129,6 @@ dmypy.json
 .pyre/
 
 # Custom
-main.py
+/main.py
 *.~lock*
+/models
