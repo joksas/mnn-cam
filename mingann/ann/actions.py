@@ -17,7 +17,6 @@ def train():
     model = architecture.get_model(DATASET, is_memristive=False)
 
     callbacks = [
-            tf.keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=25, restore_best_weights=True),
             tf.keras.callbacks.ModelCheckpoint(MODEL_PATH, monitor='val_accuracy', save_best_only=True, save_weights_only=True),
             ]
 
