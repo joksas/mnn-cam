@@ -28,3 +28,8 @@ def load_retention_conductances():
     retention_currents = load_retention_currents()
     retention_conductances  = retention_currents/abs_retention_voltages[:, None]
     return retention_conductances
+
+
+def load_retention_conductance_levels():
+    avg_levels = np.mean(load_retention_conductances(), axis=0)
+    return np.sort(avg_levels)
