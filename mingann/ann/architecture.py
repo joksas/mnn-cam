@@ -1,6 +1,28 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from mingann import crossbar
+from mingann import expdata
+
+
+def get_mnist_model(custom_weights_path=None):
+    conductance_levels = expdata.load.retention_conductance_levels()
+
+    model = models.Sequential()
+
+    model.add(layers.Flatten(input_shape=(28, 28)))
+    model.add(MemristorDense(25, conductance_levels, activation="sigmoid"))
+    model.add(MemristorDense(10, conductance_levels, activation="softmax"))
+
+    if custom_weights_path is not None:
+        model.load_weights(custom_weights_path)
+
+    model.compile(
+            optimizer=tf.keras.optimizers.SGD(),
+            loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+            metrics=["accuracy"]
+            )
+
+    return model
 
 
 class MemristorDense(layers.Dense):
