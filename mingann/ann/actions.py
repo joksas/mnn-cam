@@ -40,10 +40,9 @@ def train():
 
 def infer():
     test_data = data.load(DATASET, "testing")
-    model = architecture.get_model(DATASET, custom_weights_path=MODEL_PATH)
 
-    model.is_memristive = False
+    model = architecture.get_model(DATASET, custom_weights_path=MODEL_PATH, is_memristive=False)
     model.evaluate(test_data)
 
-    model.is_memristive = True
+    model = architecture.get_model(DATASET, custom_weights_path=MODEL_PATH, is_memristive=True)
     model.evaluate(test_data)
