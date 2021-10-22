@@ -8,7 +8,7 @@ DATASET = "mnist"
 MODELS_DIR = "models"
 MODEL_PATH = os.path.join(MODELS_DIR, "model.h5")
 INFO_PATH = os.path.join(MODELS_DIR, "info.pkl")
-MAX_NUM_EPOCHS = 10
+MAX_NUM_EPOCHS = 1000
 
 
 def train():
