@@ -1,7 +1,13 @@
-import numpy as np
+import tensorflow as tf
 
 
-def I_to_y(I, k_V, max_weight, G_max, G_min):
+def G_min_and_G_max(conductance_levels):
+    return conductance_levels[0], conductance_levels[-1]
+
+
+def I_to_y(I, k_V, max_weight, conductance_levels):
+    G_min, G_max = G_min_and_G_max(conductance_levels)
+
     I_total = I[:, 0::2] - I[:, 1::2]
     y = I_total_to_y(I_total, k_V, max_weight, G_max, G_min)
     return y
@@ -29,23 +35,24 @@ def x_to_V(x, k_V):
 
 
 def w_to_G(weights, conductance_levels):
-    G_min = conductance_levels[0]
-    G_max = conductance_levels[-1]
+    G_min, G_max = G_min_and_G_max(conductance_levels)
 
-    max_weight = np.max(np.abs(weights))
+    max_weight = tf.math.reduce_max(tf.math.abs(weights))
 
     k_G = compute_k_G(max_weight, G_max, G_min)
     G_eff = k_G*weights
 
     # We implement the pairs by choosing the lowest possible conductances.
-    G_pos = np.maximum(G_eff, 0.0) + G_min
-    G_neg = -np.minimum(G_eff, 0.0) + G_min
+    G_pos = tf.math.maximum(G_eff, 0.0) + G_min
+    G_neg = -tf.math.minimum(G_eff, 0.0) + G_min
 
-    G = np.zeros((weights.shape[0], 2*weights.shape[1]))
     # Odd columns dedicated to positive weights.
-    G[:, ::2] = G_pos
     # Even columns dedicated to positive weights.
-    G[:, 1::2] = G_neg
+    G = tf.reshape(
+            tf.concat([G_pos[..., tf.newaxis], G_neg[..., tf.newaxis]], axis=-1),
+            [tf.shape(G_pos)[0], -1]
+            )
+
 
     G = round_to_closest(G, conductance_levels)
 
@@ -54,9 +61,9 @@ def w_to_G(weights, conductance_levels):
 
 def round_to_closest(array, values):
     """Round elements in `array` to the closest elements in `values`."""
-    array_1d = array.flatten()
-    idx = np.searchsorted(values, array_1d, side="left")
-    idx = idx - (np.abs(array_1d - values[idx-1]) < np.abs(array_1d - values[idx]))
-    array_1d = values[idx]
-    array = np.reshape(array_1d, array.shape)
+    array_1d = tf.reshape(array, [-1])
+    idx = tf.searchsorted(values, array_1d, side="left")
+    idx = idx - tf.where((tf.math.abs(array_1d - tf.gather(values, idx-1)) < tf.math.abs(array_1d - tf.gather(values, idx))), 1, 0)
+    array_1d = tf.gather(values, idx)
+    array = tf.reshape(array_1d, array.shape)
     return array
