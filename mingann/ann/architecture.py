@@ -4,16 +4,16 @@ from mingann import crossbar
 from mingann import expdata
 
 
-def get_model(dataset, custom_weights_path=None, is_training=False):
+def get_model(dataset, custom_weights_path=None, is_memristive=True):
     conductance_levels = expdata.load.retention_conductance_levels()
 
     model = models.Sequential()
 
     if dataset == "mnist":
         model.add(layers.Flatten(input_shape=(28, 28)))
-        model.add(MemristorDense(25, conductance_levels, is_training))
+        model.add(MemristorDense(25, conductance_levels, is_memristive))
         model.add(layers.Activation("sigmoid"))
-        model.add(MemristorDense(10, conductance_levels, is_training))
+        model.add(MemristorDense(10, conductance_levels, is_memristive))
         model.add(layers.Activation("softmax"))
     else:
         raise ValueError("Dataset \"{dataset}\" is not supported.")
@@ -31,11 +31,8 @@ def get_model(dataset, custom_weights_path=None, is_training=False):
 
 
 class MemristorDense(layers.Dense):
-    def __init__(self, units, conductance_levels, is_training, **kwargs):
-        if is_training:
-            self.is_memristive = False
-        else:
-            self.is_memristive = True
+    def __init__(self, units, conductance_levels, is_memristive, **kwargs):
+        self.is_memristive = is_memristive
         self.conductance_levels = conductance_levels
         layers.Dense.__init__(self, units, **kwargs)
 

@@ -14,7 +14,7 @@ MAX_NUM_EPOCHS = 10
 def train():
     os.makedirs(MODELS_DIR, exist_ok=True)
 
-    model = architecture.get_model(DATASET, is_training=True)
+    model = architecture.get_model(DATASET, is_memristive=False)
 
     callbacks = [
             tf.keras.callbacks.EarlyStopping(monitor="val_accuracy", patience=25, restore_best_weights=True),
@@ -40,5 +40,11 @@ def train():
 
 
 def infer():
-    model = architecture.get_model(DATASET, custom_weights_path=MODEL_PATH, is_training=False)
-    model.evaluate(data.load(DATASET, "testing"))
+    test_data = data.load(DATASET, "testing")
+    model = architecture.get_model(DATASET, custom_weights_path=MODEL_PATH)
+
+    model.is_memristive = False
+    model.evaluate(test_data)
+
+    model.is_memristive = True
+    model.evaluate(test_data)
