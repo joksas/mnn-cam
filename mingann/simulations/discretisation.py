@@ -9,7 +9,7 @@ def get_config():
     )
 
 
-if __name__ == "__main__":
+def run():
     simulation_config = get_config()
     simulation_config.train()
     simulation_config.infer()
