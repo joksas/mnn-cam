@@ -1,13 +1,14 @@
 import pickle
 import os
+import logging
+import sys
 from pathlib import Path
 import tensorflow as tf
 import numpy as np
-import logging
 from . import architecture, data, utils
 
 
-logging.getLogger().setLevel(logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 class TrainingConfig:
