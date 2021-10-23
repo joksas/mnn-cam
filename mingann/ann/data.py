@@ -3,7 +3,7 @@ import tensorflow as tf
 
 
 TRAIN_SPLIT_BOUNDARY = 80
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 
 def load(dataset, subset):
