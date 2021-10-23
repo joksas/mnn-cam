@@ -3,7 +3,11 @@ import os
 from pathlib import Path
 import tensorflow as tf
 import numpy as np
+import logging
 from . import architecture, data, utils
+
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 class TrainingConfig:
@@ -45,6 +49,9 @@ class TrainingConfig:
 
     def reset(self):
         self.__idx = 0
+
+    def get_idx(self):
+        return self.__idx
 
 
 class InferenceConfig:
@@ -139,6 +146,9 @@ class SimulationConfig:
     def train(self):
         self.__training.reset()
         for _ in range(self.__training.num_repeats):
+            logging.info(
+                "Network %d/%d", self.__training.get_idx() + 1, self.__training.num_repeats
+            )
             self.__train_iteration()
             self.__training.next_iteration()
 
