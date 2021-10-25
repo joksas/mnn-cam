@@ -1,5 +1,6 @@
 from mingann import simulations
 from pathlib import Path
+from mingann.expdata import load
 import os
 from . import utils
 import matplotlib.pyplot as plt
@@ -37,4 +38,20 @@ def discretisation_boxplots():
     plt.tick_params(axis="both", which="both", labelsize=TICKS_FONT_SIZE)
 
     path = os.path.join(Path(__file__).parent, "discretisation-boxplots.pdf")
+    plt.savefig(path, bbox_inches="tight", transparent=True)
+
+
+def plot_discrete_levels():
+    fig, axes = plt.subplots(figsize=(ONE_COLUMN_WIDTH, 0.75 * ONE_COLUMN_WIDTH))
+    fig.tight_layout()
+
+    levels = load.retention_conductance_levels()
+    plt.hlines(levels, 0, 1, linewidth=0.25)
+
+    plt.ylabel("Mean conductance (S)", fontsize=AXIS_LABEL_FONT_SIZE)
+    plt.tick_params(axis="y", which="both", labelsize=TICKS_FONT_SIZE)
+    axes.set_xticklabels([])
+    axes.set_xticks([])
+
+    path = os.path.join(Path(__file__).parent, "discrete-levels.pdf")
     plt.savefig(path, bbox_inches="tight", transparent=True)
