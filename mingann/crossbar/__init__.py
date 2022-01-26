@@ -1,1 +1,1 @@
-from . import compute, map
+from . import ideal, map

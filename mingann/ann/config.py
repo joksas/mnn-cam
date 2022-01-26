@@ -1,12 +1,13 @@
-import pickle
-import os
 import logging
+import os
+import pickle
 import sys
 from pathlib import Path
-import tensorflow as tf
-import numpy as np
-from . import architecture, data, utils
 
+import numpy as np
+import tensorflow as tf
+
+from . import architecture, data, utils
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -56,7 +57,7 @@ class TrainingConfig:
 
 
 class InferenceConfig:
-    def __init__(self, num_repeats: int, batch_size: int = 256) -> None:
+    def __init__(self, num_repeats: int, batch_size: int = 1000) -> None:
         self.num_repeats = num_repeats
         self.batch_size = batch_size
 
@@ -123,6 +124,7 @@ class SimulationConfig:
                 self.__dataset_name,
                 custom_weights_path=self.__training.model_path(),
                 is_memristive=is_memristive,
+                power_path=self.__test_power_temp_path(),
             )
             score = model.evaluate(self.__get_data("testing"), verbose=0)
             scores[0].append(score[0])
@@ -136,12 +138,30 @@ class SimulationConfig:
     def __test_accuracy_path(self):
         return os.path.join(self.__training.models_dir(), "accuracy.npy")
 
+    def __test_power_temp_path(self):
+        return os.path.join(self.__training.models_dir(), "power-temp.csv")
+
+    def __test_power_path(self):
+        return os.path.join(self.__training.models_dir(), "power.npy")
+
+    def __load_temp_power(self):
+        power = np.loadtxt(self.__test_power_temp_path())
+        # Two synaptic layers.
+        return 2 * np.mean(power)
+
+    def __delete_temp_power(self):
+        return os.remove(self.__test_power_temp_path())
+
     def test_loss(self):
         with open(self.__test_loss_path(), "rb") as file:
             return np.load(file)
 
     def test_accuracy(self):
         with open(self.__test_accuracy_path(), "rb") as file:
+            return np.load(file)
+
+    def test_power(self):
+        with open(self.__test_power_path(), "rb") as file:
             return np.load(file)
 
     def train(self):
@@ -158,15 +178,19 @@ class SimulationConfig:
     def infer(self):
         loss = np.zeros((self.__training.num_repeats, self.__inference.num_repeats, 2))
         accuracy = np.zeros((self.__training.num_repeats, self.__inference.num_repeats, 2))
+        power = np.zeros((self.__training.num_repeats, self.__inference.num_repeats))
         self.__training.reset()
         for training_idx in range(self.__training.num_repeats):
             for inference_idx in range(self.__inference.num_repeats):
                 scores = self.__infer_iteration()
                 loss[training_idx, inference_idx, :] = scores[0]
                 accuracy[training_idx, inference_idx, :] = scores[1]
+                power[training_idx, inference_idx] = self.__load_temp_power()
+                self.__delete_temp_power()
             self.__training.next_iteration()
 
         self.__training.reset()
 
         utils.save_numpy(self.__test_loss_path(), loss)
         utils.save_numpy(self.__test_accuracy_path(), accuracy)
+        utils.save_numpy(self.__test_power_path(), power)
