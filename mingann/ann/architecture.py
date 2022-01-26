@@ -60,7 +60,7 @@ class MemristorDense(layers.Dense):
         inputs = self.combined_inputs(inputs)
 
         # Mapping inputs onto voltages.
-        k_V = 1.0
+        k_V = 0.5
         V = crossbar.map.x_to_V(inputs, k_V)
 
         # Mapping weights onto conductances.
