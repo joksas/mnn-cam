@@ -1,0 +1,5 @@
+numpy>=1.22.0
+pandas>=1.4.0
+pytest>=6.2.5
+tensorflow>=2.7.0
+tensorflow_datasets>=4.4.0
