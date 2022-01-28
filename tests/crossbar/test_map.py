@@ -1,66 +1,71 @@
 import numpy as np
-import tensorflow as tf
 import pytest
-from mingann import crossbar
+import tensorflow as tf
+from mnn import crossbar
 from tests import utils
 
-
 w_to_G_testdata = [
-        (
-            {
-                "weights": tf.constant([
+    (
+        {
+            "weights": tf.constant(
+                [
                     [4.0, 2.0, -5.0],
                     [-1.0, 0.0, 1.0],
-                    ]),
-                "conductance_levels": tf.constant(
-                    [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-                    ),
-                },
-            [
-                tf.constant([
+                ]
+            ),
+            "conductance_levels": tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]),
+        },
+        [
+            tf.constant(
+                [
                     [5.0, 1.0, 3.0, 1.0, 1.0, 6.0],
                     [1.0, 2.0, 1.0, 1.0, 2.0, 1.0],
-                    ]),
-                5.0
-                ],
+                ]
             ),
-        (
-            {
-                "weights": tf.constant([
+            5.0,
+        ],
+    ),
+    (
+        {
+            "weights": tf.constant(
+                [
                     [4.2, 2.1, -5.0],
                     [-1.0, 0.9, 0.2],
-                    ]),
-                "conductance_levels": tf.constant(
-                    [1.0e-5, 2.0e-5, 3.0e-5, 4.0e-5, 5.0e-5, 6.0e-5]
-                    ),
-                },
-            [
-                tf.constant([
+                ]
+            ),
+            "conductance_levels": tf.constant([1.0e-5, 2.0e-5, 3.0e-5, 4.0e-5, 5.0e-5, 6.0e-5]),
+        },
+        [
+            tf.constant(
+                [
                     [5.0e-5, 1.0e-5, 3.0e-5, 1.0e-5, 1.0e-5, 6.0e-5],
                     [1.0e-5, 2.0e-5, 2.0e-5, 1.0e-5, 1.0e-5, 1.0e-5],
-                    ]),
-                5.0
-                ],
+                ]
             ),
-        (
-            {
-                "weights": tf.constant([
+            5.0,
+        ],
+    ),
+    (
+        {
+            "weights": tf.constant(
+                [
                     [1.0, 2.0, 3.0],
                     [-1.0, -2.0, 3.0],
-                    ]),
-                "conductance_levels": tf.constant(
-                    [1.1, 2.0, 2.1]
-                    ),
-                },
-            [
-                tf.constant([
+                ]
+            ),
+            "conductance_levels": tf.constant([1.1, 2.0, 2.1]),
+        },
+        [
+            tf.constant(
+                [
                     [1.1, 1.1, 2.0, 1.1, 2.1, 1.1],
                     [1.1, 1.1, 1.1, 2.0, 2.1, 1.1],
-                    ]),
-                3.0
-                ],
+                ]
             ),
-        ]
+            3.0,
+        ],
+    ),
+]
 
 
 @pytest.mark.parametrize("args,expected", w_to_G_testdata)
