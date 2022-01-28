@@ -1,4 +1,4 @@
-from mingann.ann import config
+from mnn.network import config
 
 
 def get_config():

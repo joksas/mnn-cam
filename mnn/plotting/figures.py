@@ -1,10 +1,11 @@
-from mingann import simulations
-from pathlib import Path
-from mingann.expdata import load
 import os
-from . import utils
-import matplotlib.pyplot as plt
+from pathlib import Path
 
+import matplotlib.pyplot as plt
+from mnn import simulations
+from mnn.expdata import load
+
+from . import utils
 
 AXIS_LABEL_FONT_SIZE = 12
 LEGEND_FONT_SIZE = 8
