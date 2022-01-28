@@ -65,7 +65,7 @@ def round_to_closest(array, values):
     tf.print(array, values, idx)
     idx = idx - tf.where(
         (
-            tf.math.abs(array_1d - tf.gather(values, idx - 1))
+            tf.math.abs(array_1d - tf.gather(values, tf.math.maximum(0, idx - 1)))
             < tf.math.abs(array_1d - tf.gather(values, idx))
         ),
         1,
