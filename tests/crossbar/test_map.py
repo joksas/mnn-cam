@@ -1,5 +1,6 @@
 import pytest
 import tensorflow as tf
+
 from mnn import crossbar
 from tests import utils
 
