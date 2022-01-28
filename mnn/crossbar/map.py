@@ -62,6 +62,7 @@ def round_to_closest(array, values):
     """Round elements in `array` to the closest elements in `values`."""
     array_1d = tf.reshape(array, [-1])
     idx = tf.searchsorted(values, array_1d, side="left")
+    tf.print(array, values, idx)
     idx = idx - tf.where(
         (
             tf.math.abs(array_1d - tf.gather(values, idx - 1))
