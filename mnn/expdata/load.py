@@ -1,11 +1,14 @@
-import pandas as pd
 import os
 from pathlib import Path
+
+import pandas as pd
 import tensorflow as tf
 
 
 def retention_table():
-    path = os.path.join(Path(__file__).parent.parent.parent.absolute(), "expdata", "32-levels-retention.xlsx")
+    path = os.path.join(
+        Path(__file__).parent.parent.parent.absolute(), "expdata", "32-levels-retention.xlsx"
+    )
     whole_table = pd.read_excel(path)
     return whole_table
 
@@ -26,7 +29,7 @@ def retention_conductances():
     voltages = retention_voltages()
     abs_voltages = tf.math.abs(voltages)
     currents = retention_currents()
-    conductances  = currents/abs_voltages[:, None]
+    conductances = currents / abs_voltages[:, None]
     return conductances
 
 
