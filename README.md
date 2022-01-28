@@ -17,3 +17,5 @@ from mnn.plotting import figures
 simulations.discretisation.run()
 figures.discretisation_boxplots()
 ```
+Random seeds were not specified, so quantitative results might differ *slightly*.
+Qualitative results should remain the same, however.
