@@ -1,9 +1,10 @@
-def color_list():
-    """Okabe-Ito colorblind-friendly palette.
+import os
 
-    Returns
-    ----------
-    list of string
+
+def color_list() -> list[str]:
+    """Return colors of Okabe-Ito colorblind-friendly palette.
+
+    Returns:
         HEX color codes.
     """
     colors = [
@@ -19,14 +20,8 @@ def color_list():
     return colors
 
 
-def color_dict():
-    """Same as `colors_list()` but dict.
-
-    Returns
-    ----------
-    dict of string
-        HEX color codes.
-    """
+def color_dict() -> dict[str, str]:
+    """Return same as `colors_list()` but dict."""
     color_names = [
         "orange",
         "sky-blue",
@@ -39,3 +34,10 @@ def color_dict():
     ]
     colors = dict(zip(color_names, color_list()))
     return colors
+
+
+def save_fig(fig, name: str):
+    dir_name = "plots"
+    os.makedirs(dir_name, exist_ok=True)
+    path = os.path.join(dir_name, f"{name}.pdf")
+    fig.savefig(path, bbox_inches="tight", transparent=True)

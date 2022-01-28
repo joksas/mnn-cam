@@ -38,8 +38,7 @@ def discretisation_boxplots():
     plt.ylabel("Accuracy (%)", fontsize=AXIS_LABEL_FONT_SIZE)
     plt.tick_params(axis="both", which="both", labelsize=TICKS_FONT_SIZE)
 
-    path = os.path.join(Path(__file__).parent, "discretisation-boxplots.pdf")
-    plt.savefig(path, bbox_inches="tight", transparent=True)
+    utils.save_fig(fig, "discretisation-boxplots")
 
 
 def plot_discrete_levels():
@@ -54,5 +53,4 @@ def plot_discrete_levels():
     axes.set_xticklabels([])
     axes.set_xticks([])
 
-    path = os.path.join(Path(__file__).parent, "discrete-levels.pdf")
-    plt.savefig(path, bbox_inches="tight", transparent=True)
+    utils.save_fig(fig, "discrete-levels")
