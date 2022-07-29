@@ -6,8 +6,14 @@ from mnn import crossbar, expdata
 from . import utils
 
 
-def get_model(dataset, custom_weights_path=None, is_memristive=True, power_path=None):
-    conductance_levels = expdata.load.retention_conductance_levels()
+def get_model(
+    dataset,
+    custom_weights_path=None,
+    is_memristive=True,
+    power_path=None,
+    data_filename="32-levels-retention.xlsx",
+):
+    conductance_levels = expdata.load.retention_conductance_levels(data_filename)
 
     model = models.Sequential()
 

@@ -68,10 +68,12 @@ class SimulationConfig:
         dataset_name: str,
         training_config: TrainingConfig,
         inference_config: InferenceConfig = None,
+        data_filename: str = "32-levels-retention.xlsx",
     ):
         self.__dataset_name = dataset_name
         self.__training = training_config
         self.__inference = inference_config
+        self.__data_filename = data_filename
         self.__data: dict = {}
 
     def __get_data(self, subset: str) -> tf.data.Dataset:
@@ -125,6 +127,7 @@ class SimulationConfig:
                 custom_weights_path=self.__training.model_path(),
                 is_memristive=is_memristive,
                 power_path=self.__test_power_temp_path(),
+                data_filename=self.__data_filename,
             )
             score = model.evaluate(self.__get_data("testing"), verbose=0)
             scores[0].append(score[0])
