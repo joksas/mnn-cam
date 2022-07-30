@@ -9,7 +9,15 @@ import tensorflow as tf
 
 from . import architecture, data, utils
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s]:\t%(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+logging.getLogger("absl").setLevel(logging.WARNING)
 
 
 class TrainingConfig:
@@ -97,6 +105,12 @@ class SimulationConfig:
                 f'Training directory "{self.__training.dir()}" already exists. Skipping...'
             )
             return
+        logging.info(
+            "Starting to train network %d/%d.",
+            self.__training.get_idx() + 1,
+            self.__training.num_repeats,
+        )
+
         os.makedirs(self.__training.dir(), exist_ok=True)
 
         model = architecture.get_model(self.__training.dataset, is_memristive=False)
@@ -177,9 +191,6 @@ class SimulationConfig:
     def train(self):
         self.__training.reset()
         for _ in range(self.__training.num_repeats):
-            logging.info(
-                "Network %d/%d", self.__training.get_idx() + 1, self.__training.num_repeats
-            )
             self.__train_iteration()
             self.__training.next_iteration()
 
