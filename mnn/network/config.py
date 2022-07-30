@@ -92,6 +92,11 @@ class SimulationConfig:
         return self.__data[subset]
 
     def __train_iteration(self):
+        if os.path.isdir(self.__training.dir()):
+            logging.warning(
+                f'Training directory "{self.__training.dir()}" already exists. Skipping...'
+            )
+            return
         os.makedirs(self.__training.dir(), exist_ok=True)
 
         model = architecture.get_model(self.__training.dataset, is_memristive=False)
