@@ -21,6 +21,7 @@ class TrainingConfig:
         num_epochs: int = 1000,
         idx: int = 0,
     ) -> None:
+        self.dataset: str = None
         self.batch_size = batch_size
         self.num_repeats = num_repeats
         self.train_split_boundary = train_split_boundary
@@ -32,7 +33,7 @@ class TrainingConfig:
         return os.path.join(Path(__file__).parent.parent.parent.absolute(), "models")
 
     def dir(self):
-        return os.path.join(self.models_dir(), f"network-{self.__idx+1}")
+        return os.path.join(self.models_dir(), self.dataset, f"network-{self.__idx+1}")
 
     def model_path(self):
         return os.path.join(self.dir(), "model.h5")
@@ -42,6 +43,7 @@ class TrainingConfig:
 
     def info(self):
         return {
+            "dataset": self.dataset,
             "train_split_boundary": self.train_split_boundary,
             "batch_size": self.batch_size,
         }
@@ -65,12 +67,12 @@ class InferenceConfig:
 class SimulationConfig:
     def __init__(
         self,
-        dataset_name: str,
+        dataset: str,
         training_config: TrainingConfig,
         inference_config: InferenceConfig = None,
         data_filename: str = "32-levels-retention.xlsx",
     ):
-        self.__dataset_name = dataset_name
+        training_config.dataset = dataset
         self.__training = training_config
         self.__inference = inference_config
         self.__data_filename = data_filename
@@ -85,14 +87,14 @@ class SimulationConfig:
         else:
             batch_size = self.__training.batch_size
 
-        self.__data[subset] = data.load(self.__dataset_name, subset, batch_size)
+        self.__data[subset] = data.load(self.__training.dataset, subset, batch_size)
 
         return self.__data[subset]
 
     def __train_iteration(self):
         os.makedirs(self.__training.dir(), exist_ok=True)
 
-        model = architecture.get_model(self.__dataset_name, is_memristive=False)
+        model = architecture.get_model(self.__training.dataset, is_memristive=False)
 
         callbacks = [
             tf.keras.callbacks.ModelCheckpoint(
@@ -123,7 +125,7 @@ class SimulationConfig:
         scores = [[], []]
         for is_memristive in [False, True]:
             model = architecture.get_model(
-                self.__dataset_name,
+                self.__training.dataset,
                 custom_weights_path=self.__training.model_path(),
                 is_memristive=is_memristive,
                 power_path=self.__test_power_temp_path(),
