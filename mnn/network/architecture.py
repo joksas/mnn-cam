@@ -71,7 +71,11 @@ class MemristorDense(layers.Dense):
         V = crossbar.map.x_to_V(inputs, k_V)
 
         # Mapping weights onto conductances.
-        G, max_weight = crossbar.map.w_to_G(weights, self.conductance_levels)
+        G_off, G_on = self.conductance_levels[0], self.conductance_levels[-1]
+        G, max_weight = crossbar.map.w_to_G(weights, G_off, G_on)
+
+        # Discretisation
+        G = crossbar.map.round_to_closest(G, self.conductance_levels)
 
         # Ideal case for computing output currents.
         I, I_ind = crossbar.ideal.compute_I_all(V, G)
@@ -81,6 +85,6 @@ class MemristorDense(layers.Dense):
             with open(self.power_path, mode="a", encoding="utf-8"):
                 tf.print(P_avg, output_stream=f"file://{self.power_path}")
 
-        y_disturbed = crossbar.map.I_to_y(I, k_V, max_weight, self.conductance_levels)
+        y_disturbed = crossbar.map.I_to_y(I, k_V, max_weight, G_off, G_on)
 
         return y_disturbed
