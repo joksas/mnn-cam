@@ -1,3 +1,5 @@
+import logging
+
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -43,7 +45,7 @@ def load(
             )
     ds = ds.prefetch(tf.data.AUTOTUNE)
 
-    print(f'Loaded dataset "{dataset}" ({subset}): {size} examples.')
+    logging.info(f'Loaded dataset "{dataset}" ({subset}): {size} examples.')
 
     return ds
 
