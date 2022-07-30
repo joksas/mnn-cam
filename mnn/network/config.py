@@ -157,16 +157,16 @@ class SimulationConfig:
         return scores
 
     def __test_loss_path(self):
-        return os.path.join(self.__training.models_dir(), "loss.npy")
+        return os.path.join(self.__training.models_dir(), "loss")
 
     def __test_accuracy_path(self):
-        return os.path.join(self.__training.models_dir(), "accuracy.npy")
+        return os.path.join(self.__training.models_dir(), "accuracy")
 
     def __test_power_temp_path(self):
         return os.path.join(self.__training.models_dir(), "power-temp.csv")
 
     def __test_power_path(self):
-        return os.path.join(self.__training.models_dir(), "power.npy")
+        return os.path.join(self.__training.models_dir(), "power")
 
     def __load_temp_power(self):
         power = np.loadtxt(self.__test_power_temp_path())

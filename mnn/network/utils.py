@@ -1,10 +1,23 @@
+import logging
+import os
+
 import numpy as np
 import tensorflow as tf
 
 
 def save_numpy(file_path: str, data: np.ndarray):
+    if os.path.exists(f"{file_path}.npy"):
+        logging.warning(f'File "{file_path}.npy" already exists.')
+        i = 1
+        while os.path.exists(f"{file_path}-{i}.npy"):
+            i += 1
+        file_path = f"{file_path}-{i}.npy"
+    else:
+        file_path = f"{file_path}.npy"
+
     with open(file_path, "wb") as file:
         np.save(file, data)
+        logging.info(f'Saved file "{file_path}".')
 
 
 def _compute_device_power(V: tf.Tensor, I_ind: tf.Tensor) -> tf.Tensor:
