@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from mnn import crossbar
 
-from . import architecture, data, utils
+from . import architecture, callbacks, data, utils
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -126,21 +126,22 @@ class SimulationConfig:
 
         model = architecture.get_model(self.__training.dataset)
 
-        callbacks = [
+        custom_callbacks = [
             tf.keras.callbacks.ModelCheckpoint(
                 self.__training.model_path(),
                 monitor="val_accuracy",
                 save_best_only=True,
                 save_weights_only=True,
             ),
+            callbacks.TrainingLogging(),
         ]
 
         history = model.fit(
             self.__get_data("training"),
             validation_data=self.__get_data("validation"),
-            verbose=2,
+            verbose=0,
             epochs=self.__training.num_epochs,
-            callbacks=callbacks,
+            callbacks=custom_callbacks,
         )
 
         info = {
