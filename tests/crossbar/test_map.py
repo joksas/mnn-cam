@@ -70,7 +70,9 @@ w_to_G_testdata = [
 
 @pytest.mark.parametrize("args,expected", w_to_G_testdata)
 def test_w_to_G(args, expected):
+    G_off, G_on = args["conductance_levels"][0], args["conductance_levels"][-1]
     G_exp, max_weight_exp = expected
-    G, max_weight = crossbar.map.w_to_G(**args)
+    G, max_weight = crossbar.map.w_to_G(args["weights"], G_off, G_on)
+    G = crossbar.map.round_to_closest(G, args["conductance_levels"])
     utils.assert_tf_approx(G, G_exp)
     assert max_weight == max_weight_exp
