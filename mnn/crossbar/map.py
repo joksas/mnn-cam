@@ -125,18 +125,18 @@ def w_to_G(
     return G, max_weight
 
 
-def round_to_closest(array, values):
-    """Round elements in `array` to the closest elements in `values`."""
-    array_1d = tf.reshape(array, [-1])
-    idx = tf.searchsorted(values, array_1d, side="left")
-    idx = idx - tf.where(
-        (
-            tf.math.abs(array_1d - tf.gather(values, tf.math.maximum(0, idx - 1)))
-            < tf.math.abs(array_1d - tf.gather(values, idx))
-        ),
-        1,
-        0,
-    )
-    array_1d = tf.gather(values, idx)
-    array = tf.reshape(array_1d, array.shape)
-    return array
+## def round_to_closest(array, values):
+##     """Round elements in `array` to the closest elements in `values`."""
+##     array_1d = tf.reshape(array, [-1])
+##     idx = tf.searchsorted(values, array_1d, side="left")
+##     idx = idx - tf.where(
+##         (
+##             tf.math.abs(array_1d - tf.gather(values, tf.math.maximum(0, idx - 1)))
+##             < tf.math.abs(array_1d - tf.gather(values, idx))
+##         ),
+##         1,
+##         0,
+##     )
+##     array_1d = tf.gather(values, idx)
+##     array = tf.reshape(array_1d, array.shape)
+##     return array

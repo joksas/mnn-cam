@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
+from mnn import crossbar
+
 from . import architecture, data, utils
 
 logging.basicConfig(
@@ -78,12 +80,21 @@ class SimulationConfig:
         dataset: str,
         training_config: TrainingConfig,
         inference_config: InferenceConfig = None,
-        data_filename: str = "32-levels-retention.xlsx",
+        k_V: float = 0.5,
+        G_off: float = None,
+        G_on: float = None,
+        mapping_rule: str = "default",
+        nonidealities: list[crossbar.nonidealities.Nonideality] = None,
     ):
         training_config.dataset = dataset
         self.__training = training_config
         self.__inference = inference_config
-        self.__data_filename = data_filename
+        self.__nonidealities = nonidealities
+        self.__k_V = k_V
+        self.__G_off = G_off
+        self.__G_on = G_on
+        self.__mapping_rule = mapping_rule
+        self.__nonidealities = nonidealities
         self.__data: dict = {}
 
     def __get_data(self, subset: str) -> tf.data.Dataset:
@@ -113,7 +124,7 @@ class SimulationConfig:
 
         os.makedirs(self.__training.dir(), exist_ok=True)
 
-        model = architecture.get_model(self.__training.dataset, is_memristive=False)
+        model = architecture.get_model(self.__training.dataset)
 
         callbacks = [
             tf.keras.callbacks.ModelCheckpoint(
@@ -142,13 +153,19 @@ class SimulationConfig:
 
     def __infer_iteration(self):
         scores = [[], []]
-        for is_memristive in [False, True]:
+        config = {
+            "k_V": self.__k_V,
+            "G_off": self.__G_off,
+            "G_on": self.__G_on,
+            "mapping_rule": self.__mapping_rule,
+            "nonidealities": self.__nonidealities,
+            "power_path": self.__test_power_temp_path(),
+        }
+        for memristive_config in [None, config]:
             model = architecture.get_model(
                 self.__training.dataset,
                 custom_weights_path=self.__training.model_path(),
-                is_memristive=is_memristive,
-                power_path=self.__test_power_temp_path(),
-                data_filename=self.__data_filename,
+                memristive_config=memristive_config,
             )
             score = model.evaluate(self.__get_data("testing"), verbose=0)
             scores[0].append(score[0])

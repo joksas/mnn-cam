@@ -9,19 +9,15 @@ from . import utils
 def get_model(
     dataset,
     custom_weights_path=None,
-    is_memristive=True,
-    power_path=None,
-    data_filename="32-levels-retention.xlsx",
+    memristive_config=None,
 ):
-    conductance_levels = expdata.load.retention_conductance_levels(data_filename)
-
     model = models.Sequential()
 
     if dataset == "mnist":
         model.add(layers.Flatten(input_shape=(28, 28)))
-        model.add(MemristorDense(25, conductance_levels, is_memristive, power_path=power_path))
+        model.add(MemristorDense(25, memristive_config=memristive_config))
         model.add(layers.Activation("sigmoid"))
-        model.add(MemristorDense(10, conductance_levels, is_memristive, power_path=power_path))
+        model.add(MemristorDense(10, memristive_config=memristive_config))
         model.add(layers.Activation("softmax"))
     else:
         raise ValueError('Dataset "{dataset}" is not supported.')
@@ -39,17 +35,14 @@ def get_model(
 
 
 class MemristorDense(layers.Dense):
-    def __init__(self, units, conductance_levels, is_memristive, power_path=None, **kwargs):
-        self.is_memristive = is_memristive
-        self.conductance_levels = conductance_levels
-        self.power_path = power_path
+    def __init__(self, units, memristive_config=None, **kwargs):
         layers.Dense.__init__(self, units, **kwargs)
+        self.memristive_config = memristive_config
 
     def call(self, inputs):
-        if self.is_memristive:
+        if self.memristive_config is not None:
             return self.memristive_outputs(inputs)
-        else:
-            return self.standard_outputs(inputs)
+        return self.standard_outputs(inputs)
 
     def combined_weights(self):
         return tf.concat([self.kernel, tf.expand_dims(self.bias, axis=0)], 0)
@@ -62,29 +55,46 @@ class MemristorDense(layers.Dense):
     def standard_outputs(self, inputs):
         return tf.matmul(inputs, self.kernel) + self.bias
 
-    def memristive_outputs(self, inputs):
-        weights = self.combined_weights()
-        inputs = self.combined_inputs(inputs)
+    def memristive_outputs(self, x):
+        k_V = self.memristive_config["k_V"]
+        G_off = self.memristive_config["G_off"]
+        G_on = self.memristive_config["G_on"]
+        mapping_rule = self.memristive_config["mapping_rule"]
+        nonidealities = self.memristive_config["nonidealities"]
+        power_path = self.memristive_config["power_path"]
 
         # Mapping inputs onto voltages.
-        k_V = 0.5
+        ones = tf.ones([tf.shape(x)[0], 1])
+        inputs = tf.concat([x, ones], 1)
         V = crossbar.map.x_to_V(inputs, k_V)
 
         # Mapping weights onto conductances.
-        G_off, G_on = self.conductance_levels[0], self.conductance_levels[-1]
-        G, max_weight = crossbar.map.w_to_G(weights, G_off, G_on)
+        G, max_weight = crossbar.map.w_to_G(
+            self.combined_weights(), G_off, G_on, mapping_rule=mapping_rule
+        )
 
-        # Discretisation
-        G = crossbar.map.round_to_closest(G, self.conductance_levels)
+        # Linearity-preserving nonidealities
+        for nonideality in nonidealities:
+            if isinstance(nonideality, crossbar.nonidealities.LinearityPreserving):
+                G = nonideality.disturb_G(G)
+
+        # Linearity-nonpreserving nonidealities
+        I = None
+        I_ind = None
+        for nonideality in nonidealities:
+            if isinstance(nonideality, crossbar.nonidealities.LinearityNonpreserving):
+                I, I_ind = nonideality.compute_I(V, G)
 
         # Ideal case for computing output currents.
-        I, I_ind = crossbar.ideal.compute_I_all(V, G)
+        if I is None or I_ind is None:
+            I, I_ind = crossbar.ideal.compute_I_all(V, G)
 
-        if self.power_path is not None:
+        if power_path is not None:
             P_avg = utils.compute_avg_crossbar_power(V, I_ind)
-            with open(self.power_path, mode="a", encoding="utf-8"):
-                tf.print(P_avg, output_stream=f"file://{self.power_path}")
+            with open(power_path, mode="a", encoding="utf-8"):
+                tf.print(P_avg, output_stream=f"file://{power_path}")
 
-        y_disturbed = crossbar.map.I_to_y(I, k_V, max_weight, G_off, G_on)
+        # Converting to outputs.
+        y_disturbed = crossbar.map.I_to_y(I, k_V, max_weight, G_on, G_off)
 
         return y_disturbed
