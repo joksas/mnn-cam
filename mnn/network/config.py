@@ -201,16 +201,13 @@ class InferenceConfig:
         return os.remove(self.__power_temp_path())
 
     def loss(self):
-        with open(self.__loss_path(), "rb") as file:
-            return np.load(file)
+        return utils.load_numpy(self.__loss_path())
 
     def accuracy(self):
-        with open(self.__accuracy_path(), "rb") as file:
-            return np.load(file)
+        return utils.load_numpy(self.__accuracy_path())
 
     def power(self):
-        with open(self.__power_path(), "rb") as file:
-            return np.load(file)
+        return utils.load_numpy(self.__power_path())
 
     def run(self):
         os.makedirs(self.dir(), exist_ok=True)

@@ -20,6 +20,11 @@ def save_numpy(file_path: str, data: np.ndarray):
         logging.info(f'Saved file "{file_path}".')
 
 
+def load_numpy(file_path: str):
+    with open(f"{file_path}.npy", "rb") as file:
+        return np.load(file)
+
+
 def _compute_device_power(V: tf.Tensor, I_ind: tf.Tensor) -> tf.Tensor:
     """Compute power dissipated by individual devices in a crossbar.
 
