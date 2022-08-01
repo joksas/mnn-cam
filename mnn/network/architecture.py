@@ -13,7 +13,7 @@ def get_model(
 ):
     model = models.Sequential()
 
-    if dataset == "mnist":
+    if dataset in ["mnist", "fashion_mnist", "kmnist"]:
         model.add(layers.Flatten(input_shape=(28, 28)))
         model.add(MemristorDense(25, memristive_config=memristive_config))
         model.add(layers.Activation("sigmoid"))
