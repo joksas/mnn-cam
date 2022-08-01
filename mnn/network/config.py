@@ -43,7 +43,7 @@ class TrainingConfig:
         return os.path.join(Path(__file__).parent.parent.parent.absolute(), "models")
 
     def dir(self):
-        return os.path.join(self.models_dir(), self.dataset, f"network-{self.__idx+1}")
+        return os.path.join(self.models_dir(), self.dataset, "training", str(self.__idx + 1))
 
     def model_path(self):
         return os.path.join(self.dir(), "model.h5")
