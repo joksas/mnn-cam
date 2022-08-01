@@ -40,7 +40,7 @@ class TrainingConfig:
 
     @staticmethod
     def models_dir():
-        return os.path.join(Path(__file__).parent.parent.parent.absolute(), "models")
+        return os.path.join(Path(__file__).parent.parent.parent.absolute(), "_gen")
 
     def dir(self):
         return os.path.join(self.models_dir(), self.dataset, "training", str(self.__idx + 1))
