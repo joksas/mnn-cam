@@ -7,7 +7,7 @@ def run():
     G_off, G_on = conductance_levels[0], conductance_levels[-1]
     nonideality = crossbar.nonidealities.Discretised(conductance_levels)
 
-    training = config.TrainingConfig("mnist", 32, 1)
+    training = config.TrainingConfig("mnist", 32, 10)
     training.run()
 
     ideal_inference = config.InferenceConfig(training, [], 1, G_off=G_off, G_on=G_on)
