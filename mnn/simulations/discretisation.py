@@ -19,4 +19,4 @@ def ideal_config():
 def run():
     training.mnist().run()
     ideal_config().run()
-    nonideal_config.run()
+    nonideal_config().run()
