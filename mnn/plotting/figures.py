@@ -17,19 +17,20 @@ TWO_COLUMNS_WIDTH = 17.8 / 2.54
 def discretisation_boxplots():
     fig, axes = plt.subplots(figsize=(ONE_COLUMN_WIDTH, 0.75 * ONE_COLUMN_WIDTH))
     fig.tight_layout()
-    config = simulations.discretisation.get_config()
 
-    accuracy = 100 * config.test_accuracy()
-    boxplot_accuracies = [accuracy[:, 0, idx] for idx in [0, 1]]
-    boxplot_colors = [utils.color_dict()[key] for key in ["blue", "orange"]]
+    configs = [
+        simulations.discretisation.ideal_config(),
+        simulations.discretisation.nonideal_config(),
+    ]
 
-    for idx, (boxplot_accuracy, boxplot_color) in enumerate(
-        zip(boxplot_accuracies, boxplot_colors)
-    ):
-        bplot = plt.boxplot(boxplot_accuracy, positions=[idx], sym=boxplot_color)
+    colors = [utils.color_dict()[key] for key in ["blue", "orange"]]
+
+    for idx, (config, color) in enumerate(zip(configs, colors)):
+        accuracy = 100 * config.accuracy()
+        bplot = plt.boxplot(accuracy, positions=[idx], sym=color)
         plt.setp(bplot["fliers"], marker="x", markersize=2, markeredgewidth=0.5)
         for element in ["boxes", "whiskers", "fliers", "means", "medians", "caps"]:
-            plt.setp(bplot[element], color=boxplot_color, linewidth=0.5)
+            plt.setp(bplot[element], color=color, linewidth=0.5)
 
     plt.xticks([0, 1], ["Digital", "Memristive"])
     plt.xlabel("Weight implementation", fontsize=AXIS_LABEL_FONT_SIZE)
@@ -39,11 +40,11 @@ def discretisation_boxplots():
     utils.save_fig(fig, "discretisation-boxplots")
 
 
-def plot_discrete_levels():
+def plot_discrete_levels(filename):
     fig, axes = plt.subplots(figsize=(ONE_COLUMN_WIDTH, 0.75 * ONE_COLUMN_WIDTH))
     fig.tight_layout()
 
-    levels = load.retention_conductance_levels()
+    levels = load.retention_conductance_levels(filename)
     plt.hlines(levels, 0, 1, linewidth=0.25)
 
     plt.ylabel("Mean conductance (S)", fontsize=AXIS_LABEL_FONT_SIZE)
