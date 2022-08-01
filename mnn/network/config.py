@@ -21,14 +21,10 @@ logging.basicConfig(
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 logging.getLogger("absl").setLevel(logging.WARNING)
 
-
-class StageConfig:
-    @staticmethod
-    def gen_dir():
-        return os.path.join(Path(__file__).parent.parent.parent.absolute(), "_gen")
+_GEN_DIR = os.path.join(Path(__file__).parent.parent.parent.absolute(), "_gen")
 
 
-class TrainingConfig(StageConfig):
+class TrainingConfig:
     def __init__(
         self,
         dataset: str,
@@ -46,7 +42,7 @@ class TrainingConfig(StageConfig):
         self.__data: dict = {}
 
     def dir(self):
-        return os.path.join(self.gen_dir(), self.dataset, "training")
+        return os.path.join(_GEN_DIR, self.dataset, "training")
 
     def network_dir(self):
         return os.path.join(self.dir(), str(self.__idx + 1))
@@ -135,7 +131,7 @@ class TrainingConfig(StageConfig):
         self.reset()
 
 
-class InferenceConfig(StageConfig):
+class InferenceConfig:
     def __init__(
         self,
         training_config: TrainingConfig,
@@ -163,7 +159,7 @@ class InferenceConfig(StageConfig):
 
     def dir(self):
         return os.path.join(
-            self.gen_dir(), self.__training.dataset, "inference", self.nonidealities_label()
+            _GEN_DIR, self.__training.dataset, "inference", self.nonidealities_label()
         )
 
     def __run_iteration(self):
