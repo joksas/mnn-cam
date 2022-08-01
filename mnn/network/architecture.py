@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-from mnn import crossbar, expdata
+from mnn import crossbar
 
 from . import utils
 
