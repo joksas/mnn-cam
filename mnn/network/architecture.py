@@ -95,6 +95,6 @@ class MemristorDense(layers.Dense):
                 tf.print(P_avg, output_stream=f"file://{power_path}")
 
         # Converting to outputs.
-        y_disturbed = crossbar.map.I_to_y(I, k_V, max_weight, G_on, G_off)
+        y_disturbed = crossbar.map.I_to_y(I, k_V, max_weight, G_off, G_on)
 
         return y_disturbed
