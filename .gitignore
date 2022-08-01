@@ -132,4 +132,5 @@ dmypy.json
 /main.py
 *.~lock*
 /models
+/_gen
 *.pdf

@@ -22,34 +22,40 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 logging.getLogger("absl").setLevel(logging.WARNING)
 
 
-class TrainingConfig:
+class StageConfig:
+    @staticmethod
+    def gen_dir():
+        return os.path.join(Path(__file__).parent.parent.parent.absolute(), "_gen")
+
+
+class TrainingConfig(StageConfig):
     def __init__(
         self,
+        dataset: str,
         batch_size: int,
         num_repeats: int,
         train_split_boundary: int = 80,
         num_epochs: int = 1000,
-        idx: int = 0,
     ) -> None:
-        self.dataset: str = None
+        self.dataset: str = dataset
         self.batch_size = batch_size
         self.num_repeats = num_repeats
         self.train_split_boundary = train_split_boundary
         self.num_epochs = num_epochs
-        self.__idx = idx
-
-    @staticmethod
-    def models_dir():
-        return os.path.join(Path(__file__).parent.parent.parent.absolute(), "_gen")
+        self.__idx = 0
+        self.__data: dict = {}
 
     def dir(self):
-        return os.path.join(self.models_dir(), self.dataset, "training", str(self.__idx + 1))
+        return os.path.join(self.gen_dir(), self.dataset, "training")
+
+    def network_dir(self):
+        return os.path.join(self.dir(), str(self.__idx + 1))
 
     def model_path(self):
-        return os.path.join(self.dir(), "model.h5")
+        return os.path.join(self.network_dir(), "model.h5")
 
     def info_path(self):
-        return os.path.join(self.dir(), "info.pkl")
+        return os.path.join(self.network_dir(), "info.pkl")
 
     def info(self):
         return {
@@ -58,77 +64,42 @@ class TrainingConfig:
             "batch_size": self.batch_size,
         }
 
-    def next_iteration(self):
-        self.__idx += 1
-
     def reset(self):
         self.__idx = 0
 
     def get_idx(self):
         return self.__idx
 
-
-class InferenceConfig:
-    def __init__(self, num_repeats: int, batch_size: int = 1000) -> None:
-        self.num_repeats = num_repeats
-        self.batch_size = batch_size
-
-
-class SimulationConfig:
-    def __init__(
-        self,
-        dataset: str,
-        training_config: TrainingConfig,
-        inference_config: InferenceConfig = None,
-        k_V: float = 0.5,
-        G_off: float = None,
-        G_on: float = None,
-        mapping_rule: str = "default",
-        nonidealities: list[crossbar.nonidealities.Nonideality] = None,
-    ):
-        training_config.dataset = dataset
-        self.__training = training_config
-        self.__inference = inference_config
-        self.__nonidealities = nonidealities
-        self.__k_V = k_V
-        self.__G_off = G_off
-        self.__G_on = G_on
-        self.__mapping_rule = mapping_rule
-        self.__nonidealities = nonidealities
-        self.__data: dict = {}
-
-    def __get_data(self, subset: str) -> tf.data.Dataset:
+    def get_data(self, subset: str, batch_size: int = None) -> tf.data.Dataset:
         if subset in self.__data:
             return self.__data[subset]
 
-        if subset == "testing":
-            batch_size = self.__inference.batch_size
-        else:
-            batch_size = self.__training.batch_size
+        if batch_size is None:
+            batch_size = self.batch_size
 
-        self.__data[subset] = data.load(self.__training.dataset, subset, batch_size)
+        self.__data[subset] = data.load(self.dataset, subset, batch_size)
 
         return self.__data[subset]
 
-    def __train_iteration(self):
-        if os.path.isdir(self.__training.dir()):
+    def __run_iteration(self):
+        if os.path.isdir(self.network_dir()):
             logging.warning(
-                f'Training directory "{self.__training.dir()}" already exists. Skipping...'
+                f'Training directory "{self.network_dir()}" already exists. Skipping...'
             )
             return
         logging.info(
             "Starting to train network %d/%d.",
-            self.__training.get_idx() + 1,
-            self.__training.num_repeats,
+            self.__idx + 1,
+            self.num_repeats,
         )
 
-        os.makedirs(self.__training.dir(), exist_ok=True)
+        os.makedirs(self.network_dir(), exist_ok=True)
 
-        model = architecture.get_model(self.__training.dataset)
+        model = architecture.get_model(self.dataset)
 
         custom_callbacks = [
             tf.keras.callbacks.ModelCheckpoint(
-                self.__training.model_path(),
+                self.model_path(),
                 monitor="val_accuracy",
                 save_best_only=True,
                 save_weights_only=True,
@@ -137,99 +108,132 @@ class SimulationConfig:
         ]
 
         history = model.fit(
-            self.__get_data("training"),
-            validation_data=self.__get_data("validation"),
+            self.get_data("training"),
+            validation_data=self.get_data("validation"),
             verbose=0,
-            epochs=self.__training.num_epochs,
+            epochs=self.num_epochs,
             callbacks=custom_callbacks,
         )
 
         info = {
             "history": history.history,
-            **self.__training.info(),
+            **self.info(),
         }
 
-        with open(self.__training.info_path(), "wb") as handle:
+        with open(self.info_path(), "wb") as handle:
             pickle.dump(info, handle)
 
-    def __infer_iteration(self):
-        scores = [[], []]
+    def next_iteration(self):
+        self.__idx += 1
+
+    def run(self):
+        self.reset()
+        for _ in range(self.num_repeats):
+            self.__run_iteration()
+            self.next_iteration()
+
+        self.reset()
+
+
+class InferenceConfig(StageConfig):
+    def __init__(
+        self,
+        training_config: TrainingConfig,
+        nonidealities: list[crossbar.nonidealities.Nonideality],
+        num_repeats: int,
+        batch_size: int = 1000,
+        k_V: float = 0.5,
+        G_off: float = None,
+        G_on: float = None,
+        mapping_rule: str = "default",
+    ) -> None:
+        self.__training = training_config
+        self.__nonidealities = nonidealities
+        self.__num_repeats = num_repeats
+        self.__batch_size = batch_size
+        self.__k_V = k_V
+        self.__G_off = G_off
+        self.__G_on = G_on
+        self.__mapping_rule = mapping_rule
+
+    def nonidealities_label(self):
+        if len(self.__nonidealities) == 0:
+            return "ideal"
+        return "+".join(nonideality.label() for nonideality in self.__nonidealities)
+
+    def dir(self):
+        return os.path.join(
+            self.gen_dir(), self.__training.dataset, "inference", self.nonidealities_label()
+        )
+
+    def __run_iteration(self):
         config = {
             "k_V": self.__k_V,
             "G_off": self.__G_off,
             "G_on": self.__G_on,
             "mapping_rule": self.__mapping_rule,
             "nonidealities": self.__nonidealities,
-            "power_path": self.__test_power_temp_path(),
+            "power_path": self.__power_temp_path(),
         }
-        for memristive_config in [None, config]:
-            model = architecture.get_model(
-                self.__training.dataset,
-                custom_weights_path=self.__training.model_path(),
-                memristive_config=memristive_config,
-            )
-            score = model.evaluate(self.__get_data("testing"), verbose=0)
-            scores[0].append(score[0])
-            scores[1].append(score[1])
+        model = architecture.get_model(
+            self.__training.dataset,
+            custom_weights_path=self.__training.model_path(),
+            memristive_config=config,
+        )
+        score = model.evaluate(self.__training.get_data("testing"), verbose=0)
 
-        return scores
+        return score
 
-    def __test_loss_path(self):
-        return os.path.join(self.__training.models_dir(), "loss")
+    def __loss_path(self):
+        return os.path.join(self.dir(), "loss")
 
-    def __test_accuracy_path(self):
-        return os.path.join(self.__training.models_dir(), "accuracy")
+    def __accuracy_path(self):
+        return os.path.join(self.dir(), "accuracy")
 
-    def __test_power_temp_path(self):
-        return os.path.join(self.__training.models_dir(), "power-temp.csv")
+    def __power_temp_path(self):
+        return os.path.join(self.dir(), "power-temp.csv")
 
-    def __test_power_path(self):
-        return os.path.join(self.__training.models_dir(), "power")
+    def __power_path(self):
+        return os.path.join(self.dir(), "power")
 
     def __load_temp_power(self):
-        power = np.loadtxt(self.__test_power_temp_path())
+        power = np.loadtxt(self.__power_temp_path())
         # Two synaptic layers.
         return 2 * np.mean(power)
 
     def __delete_temp_power(self):
-        return os.remove(self.__test_power_temp_path())
+        return os.remove(self.__power_temp_path())
 
-    def test_loss(self):
-        with open(self.__test_loss_path(), "rb") as file:
+    def loss(self):
+        with open(self.__loss_path(), "rb") as file:
             return np.load(file)
 
-    def test_accuracy(self):
-        with open(self.__test_accuracy_path(), "rb") as file:
+    def accuracy(self):
+        with open(self.__accuracy_path(), "rb") as file:
             return np.load(file)
 
-    def test_power(self):
-        with open(self.__test_power_path(), "rb") as file:
+    def power(self):
+        with open(self.__power_path(), "rb") as file:
             return np.load(file)
 
-    def train(self):
-        self.__training.reset()
-        for _ in range(self.__training.num_repeats):
-            self.__train_iteration()
-            self.__training.next_iteration()
+    def run(self):
+        os.makedirs(self.dir(), exist_ok=True)
 
-        self.__training.reset()
-
-    def infer(self):
-        loss = np.zeros((self.__training.num_repeats, self.__inference.num_repeats, 2))
-        accuracy = np.zeros((self.__training.num_repeats, self.__inference.num_repeats, 2))
-        power = np.zeros((self.__training.num_repeats, self.__inference.num_repeats))
+        loss = np.zeros((self.__training.num_repeats, self.__num_repeats))
+        accuracy = np.zeros((self.__training.num_repeats, self.__num_repeats))
+        power = np.zeros((self.__training.num_repeats, self.__num_repeats))
         self.__training.reset()
         for training_idx in range(self.__training.num_repeats):
-            for inference_idx in range(self.__inference.num_repeats):
-                scores = self.__infer_iteration()
-                loss[training_idx, inference_idx, :] = scores[0]
-                accuracy[training_idx, inference_idx, :] = scores[1]
+            for inference_idx in range(self.__num_repeats):
+                scores = self.__run_iteration()
+                loss[training_idx, inference_idx] = scores[0]
+                accuracy[training_idx, inference_idx] = scores[1]
                 power[training_idx, inference_idx] = self.__load_temp_power()
                 self.__delete_temp_power()
             self.__training.next_iteration()
 
         self.__training.reset()
 
-        utils.save_numpy(self.__test_loss_path(), loss)
-        utils.save_numpy(self.__test_accuracy_path(), accuracy)
-        utils.save_numpy(self.__test_power_path(), power)
+        utils.save_numpy(self.__loss_path(), loss)
+        utils.save_numpy(self.__accuracy_path(), accuracy)
+        utils.save_numpy(self.__power_path(), power)
