@@ -61,7 +61,9 @@ class Discretised(Nonideality, LinearityPreserving):
         self.G_levels = G_levels
 
     def label(self):
-        return f"discretised:{len(self.G_levels)}"
+        G_off = self.G_levels[0]
+        G_on = self.G_levels[-1]
+        return f"discretised={{num_states={len(self.G_levels)},G_off={G_off:.3g},G_on={G_on:.3g}}}"
 
     def disturb_G(self, G):
         G_1d = tf.reshape(G, [-1])
