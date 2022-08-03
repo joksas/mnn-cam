@@ -41,3 +41,15 @@ def save_fig(fig, name: str):
     os.makedirs(dir_name, exist_ok=True)
     path = os.path.join(dir_name, f"{name}.pdf")
     fig.savefig(path, bbox_inches="tight", transparent=True)
+
+
+def add_boxplot_legend(axis, boxplots, labels, linewdith=1.0, loc="upper right"):
+    leg = axis.legend(
+        [boxplot["boxes"][0] for boxplot in boxplots],
+        labels,
+        fontsize=8,
+        frameon=False,
+        loc=loc,
+    )
+    for line in leg.get_lines():
+        line.set_linewidth(linewdith)
