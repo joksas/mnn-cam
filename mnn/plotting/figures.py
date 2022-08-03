@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import rc
 
 from mnn import simulations
 from mnn.expdata import load
@@ -12,6 +13,8 @@ SUBPLOT_LABEL_SIZE = 12
 LINEWIDTH = 0.75
 ONE_COLUMN_WIDTH = 8.5 / 2.54
 TWO_COLUMNS_WIDTH = 17.8 / 2.54
+
+rc("font", **{"family": "sans-serif", "sans-serif": ["Arial"]})
 
 
 def discretisation_boxplots():
