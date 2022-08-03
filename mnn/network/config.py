@@ -54,10 +54,13 @@ class TrainingConfig:
         return os.path.join(self.network_dir(), "info.pkl")
 
     def info(self):
+        with open(self.info_path(), "rb") as handle:
+            taining_data = pickle.load(handle)
         return {
             "dataset": self.dataset,
             "train_split_boundary": self.train_split_boundary,
             "batch_size": self.batch_size,
+            "training_data": taining_data,
         }
 
     def reset(self):
