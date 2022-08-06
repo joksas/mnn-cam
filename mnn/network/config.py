@@ -155,7 +155,12 @@ class InferenceConfig:
         self.__G_on = G_on
         self.__mapping_rule = mapping_rule
 
+    def is_memristive(self):
+        return self.__nonidealities is not None
+
     def nonidealities_label(self):
+        if not self.is_memristive():
+            return "digital"
         if len(self.__nonidealities) == 0:
             return "ideal"
         return "+".join(nonideality.label() for nonideality in self.__nonidealities)
@@ -166,14 +171,17 @@ class InferenceConfig:
         )
 
     def __run_iteration(self):
-        config = {
-            "k_V": self.__k_V,
-            "G_off": self.__G_off,
-            "G_on": self.__G_on,
-            "mapping_rule": self.__mapping_rule,
-            "nonidealities": self.__nonidealities,
-            "power_path": self.__power_temp_path(),
-        }
+        if not self.is_memristive():
+            config = None
+        else:
+            config = {
+                "k_V": self.__k_V,
+                "G_off": self.__G_off,
+                "G_on": self.__G_on,
+                "mapping_rule": self.__mapping_rule,
+                "nonidealities": self.__nonidealities,
+                "power_path": self.__power_temp_path(),
+            }
         model = architecture.get_model(
             self.__training.dataset,
             custom_weights_path=self.__training.model_path(),
@@ -217,19 +225,22 @@ class InferenceConfig:
 
         loss = np.zeros((self.__training.num_repeats, self.__num_repeats))
         accuracy = np.zeros((self.__training.num_repeats, self.__num_repeats))
-        power = np.zeros((self.__training.num_repeats, self.__num_repeats))
+        if self.is_memristive():
+            power = np.zeros((self.__training.num_repeats, self.__num_repeats))
         self.__training.reset()
         for training_idx in range(self.__training.num_repeats):
             for inference_idx in range(self.__num_repeats):
                 scores = self.__run_iteration()
                 loss[training_idx, inference_idx] = scores[0]
                 accuracy[training_idx, inference_idx] = scores[1]
-                power[training_idx, inference_idx] = self.__load_temp_power()
-                self.__delete_temp_power()
+                if self.is_memristive():
+                    power[training_idx, inference_idx] = self.__load_temp_power()
+                    self.__delete_temp_power()
             self.__training.next_iteration()
 
         self.__training.reset()
 
         utils.save_numpy(self.__loss_path(), loss)
         utils.save_numpy(self.__accuracy_path(), accuracy)
-        utils.save_numpy(self.__power_path(), power)
+        if self.is_memristive():
+            utils.save_numpy(self.__power_path(), power)

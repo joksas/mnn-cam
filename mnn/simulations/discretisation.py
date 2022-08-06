@@ -15,15 +15,15 @@ def configs():
 
     return [
         # MNIST
-        config.InferenceConfig(training.mnist(), [], 1, **G_32),
+        config.InferenceConfig(training.mnist(), None, 1),
         config.InferenceConfig(training.mnist(), [nonideality_32], 1, **G_32),
         config.InferenceConfig(training.mnist(), [nonideality_370], 1, **G_370),
         # Fashion MNIST
-        config.InferenceConfig(training.fashion_mnist(), [], 1, **G_32),
+        config.InferenceConfig(training.fashion_mnist(), None, 1),
         config.InferenceConfig(training.fashion_mnist(), [nonideality_32], 1, **G_32),
         config.InferenceConfig(training.fashion_mnist(), [nonideality_370], 1, **G_370),
         # KMNIST
-        config.InferenceConfig(training.kmnist(), [], 1, **G_32),
+        config.InferenceConfig(training.kmnist(), None, 1),
         config.InferenceConfig(training.kmnist(), [nonideality_32], 1, **G_32),
         config.InferenceConfig(training.kmnist(), [nonideality_370], 1, **G_370),
     ]
