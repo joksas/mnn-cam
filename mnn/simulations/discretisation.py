@@ -31,5 +31,8 @@ def configs():
 
 def run():
     training.mnist().run()
+    training.fashion_mnist().run()
+    training.kmnist().run()
+
     for c in configs():
         c.run()
