@@ -6,14 +6,10 @@ import tensorflow as tf
 
 
 def save_numpy(file_path: str, data: np.ndarray):
-    if os.path.exists(f"{file_path}.npy"):
-        logging.warning(f'File "{file_path}.npy" already exists.')
-        i = 1
-        while os.path.exists(f"{file_path}-{i}.npy"):
-            i += 1
-        file_path = f"{file_path}-{i}.npy"
-    else:
-        file_path = f"{file_path}.npy"
+    file_path = f"{file_path}.npy"
+    if os.path.exists(file_path):
+        logging.warning(f'File "{file_path}.npy" already exists. Skipping...')
+        return
 
     with open(file_path, "wb") as file:
         np.save(file, data)
