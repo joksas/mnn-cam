@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.pyplot import rc
 
 from mnn import simulations
@@ -65,3 +66,51 @@ def plot_discrete_levels(filename):
     axes.set_xticks([])
 
     utils.save_fig(fig, "discrete-levels")
+
+
+def training():
+    fig, axes = plt.subplots(
+        1, 3, figsize=(TWO_COLUMNS_WIDTH, 0.4 * TWO_COLUMNS_WIDTH), sharex=True, sharey=True
+    )
+    fig.tight_layout()
+
+    configs = [
+        simulations.training.mnist(),
+        simulations.training.fashion_mnist(),
+        simulations.training.kmnist(),
+    ]
+    datasets = ["MNIST", "Fashion MNIST", "KMNIST"]
+    epochs = np.arange(1, 1001)
+
+    colors = utils.color_dict()
+    for axis, config, dataset in zip(axes, configs, datasets):
+        for _ in range(config.num_repeats):
+            training_error = 100 * (
+                1 - np.array(config.info()["training_data"]["history"]["accuracy"])
+            )
+            validation_error = 100 * (
+                1 - np.array(config.info()["training_data"]["history"]["val_accuracy"])
+            )
+            axis.plot(
+                epochs,
+                training_error,
+                label="Training",
+                color=colors["orange"],
+                linewidth=LINEWIDTH / 2,
+            )
+            axis.plot(
+                epochs,
+                validation_error,
+                label="Validation",
+                color=colors["blue"],
+                linewidth=LINEWIDTH / 2,
+            )
+            config.next_iteration()
+        axis.set_title(dataset, fontsize=AXIS_LABEL_FONT_SIZE)
+        axis.set_xlabel("Epoch", fontsize=AXIS_LABEL_FONT_SIZE)
+
+    axes[0].set_ylabel("Error (%)", fontsize=AXIS_LABEL_FONT_SIZE)
+    axes[0].set_yscale("log")
+    axes[0].set_xlim([0, 1000])
+
+    utils.save_fig(fig, "training")
