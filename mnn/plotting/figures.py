@@ -1,21 +1,18 @@
+import os
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.pyplot import rc
 
 from mnn import simulations
 from mnn.expdata import load
 
 from . import utils
 
-AXIS_LABEL_FONT_SIZE = 12
-LEGEND_FONT_SIZE = 8
-TICKS_FONT_SIZE = 8
-SUBPLOT_LABEL_SIZE = 12
-LINEWIDTH = 0.75
+plt.style.use(os.path.join(Path(__file__).parent.absolute(), "style.mplstyle"))
+
 ONE_COLUMN_WIDTH = 8.5 / 2.54
 TWO_COLUMNS_WIDTH = 17.8 / 2.54
-
-rc("font", **{"family": "sans-serif", "sans-serif": ["Arial"]})
 
 
 def discretisation_boxplots():
@@ -39,9 +36,9 @@ def discretisation_boxplots():
 
     axes.set_yscale("log")
     plt.xticks([1, 5, 9], ["MNIST", "Fashion MNIST", "KMNIST"])
-    plt.xlabel("Dataset", fontsize=AXIS_LABEL_FONT_SIZE)
-    plt.ylabel("Error (%)", fontsize=AXIS_LABEL_FONT_SIZE)
-    plt.tick_params(axis="both", which="both", labelsize=TICKS_FONT_SIZE)
+    plt.xlabel("Dataset")
+    plt.ylabel("Error (%)")
+    plt.tick_params(axis="both", which="both")
 
     utils.add_boxplot_legend(
         axes,
@@ -60,8 +57,8 @@ def plot_discrete_levels(filename):
     levels = load.retention_conductance_levels(filename)
     plt.hlines(levels, 0, 1, linewidth=0.25)
 
-    plt.ylabel("Mean conductance (S)", fontsize=AXIS_LABEL_FONT_SIZE)
-    plt.tick_params(axis="y", which="both", labelsize=TICKS_FONT_SIZE)
+    plt.ylabel("Mean conductance (S)")
+    plt.tick_params(axis="y", which="both")
     axes.set_xticklabels([])
     axes.set_xticks([])
 
@@ -96,20 +93,18 @@ def training():
                 training_error,
                 label="Training",
                 color=colors["orange"],
-                linewidth=LINEWIDTH / 2,
             )
             axis.plot(
                 epochs,
                 validation_error,
                 label="Validation",
                 color=colors["blue"],
-                linewidth=LINEWIDTH / 2,
             )
             config.next_iteration()
-        axis.set_title(dataset, fontsize=AXIS_LABEL_FONT_SIZE)
-        axis.set_xlabel("Epoch", fontsize=AXIS_LABEL_FONT_SIZE)
+        axis.set_title(dataset)
+        axis.set_xlabel("Epoch")
 
-    axes[0].set_ylabel("Error (%)", fontsize=AXIS_LABEL_FONT_SIZE)
+    axes[0].set_ylabel("Error (%)")
     axes[0].set_yscale("log")
     axes[0].set_xlim([0, 1000])
 
