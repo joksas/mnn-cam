@@ -7,7 +7,3 @@ def mnist():
 
 def fashion_mnist():
     return config.TrainingConfig("fashion_mnist", 32, 10)
-
-
-def kmnist():
-    return config.TrainingConfig("kmnist", 32, 10)

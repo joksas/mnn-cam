@@ -16,7 +16,7 @@ TWO_COLUMNS_WIDTH = 17.8 / 2.54
 
 
 def discretisation_boxplots():
-    fig, axes = plt.subplots(figsize=(TWO_COLUMNS_WIDTH, 0.4 * TWO_COLUMNS_WIDTH))
+    fig, axes = plt.subplots(figsize=(0.66 * TWO_COLUMNS_WIDTH, 0.4 * TWO_COLUMNS_WIDTH))
     fig.tight_layout()
 
     configs = simulations.discretisation.configs()
@@ -35,7 +35,7 @@ def discretisation_boxplots():
             plt.setp(bplot[element], color=color, linewidth=0.75)
 
     axes.set_yscale("log")
-    plt.xticks([1, 5, 9], ["MNIST", "Fashion MNIST", "KMNIST"])
+    plt.xticks([1, 5], ["MNIST", "Fashion MNIST"])
     plt.xlabel("Dataset")
     plt.ylabel("Error (%)")
     plt.tick_params(axis="both", which="both")
@@ -74,7 +74,6 @@ def training():
     configs = [
         simulations.training.mnist(),
         simulations.training.fashion_mnist(),
-        simulations.training.kmnist(),
     ]
     datasets = ["MNIST", "Fashion MNIST", "KMNIST"]
     epochs = np.arange(1, 1001)
