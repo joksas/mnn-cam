@@ -64,6 +64,21 @@ def plot_discrete_levels(filename):
 
     utils.save_fig(fig, "discrete-levels")
 
+def plot_sweeps(filename):
+    fig, axes = plt.subplots(figsize=(TWO_COLUMNS_WIDTH, 0.4 * TWO_COLUMNS_WIDTH))
+    fig.tight_layout()
+
+    sweeps = load.sweeping_data(filename)
+    for sweep in sweeps:
+        plt.plot(sweep[:, 0], sweep[:, 1], linestyle="dashed")
+
+    axes.set_xlabel("Voltage (V)")
+    axes.set_ylabel("Current (A)")
+
+    axes.set_ylim(bottom=0)
+
+    utils.save_fig(fig, "sweeps")
+
 
 def training():
     fig, axes = plt.subplots(

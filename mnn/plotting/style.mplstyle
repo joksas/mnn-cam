@@ -3,6 +3,7 @@ axes.labelsize: 12
 xtick.labelsize: 8
 ytick.labelsize: 8
 lines.linewidth: 0.75
+axes.prop_cycle: cycler('color', ['E69F00', '56B4E9', '009E73', 'F0E442', '0072B2', 'D55E00', 'CC79A7', '000000'])
 
 legend.fontsize: 9
 
