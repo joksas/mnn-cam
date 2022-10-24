@@ -5,24 +5,30 @@ from . import training
 
 
 def configs():
-    conductance_levels_32 = expdata.load.retention_conductance_levels("32-levels-retention.xlsx")
-    nonideality_32 = crossbar.nonidealities.Discretised(conductance_levels_32)
-    G_32 = {"G_off": conductance_levels_32[0], "G_on": conductance_levels_32[-1]}
-
-    conductance_levels_370 = expdata.load.retention_conductance_levels("370-levels-retention.xlsx")
-    nonideality_370 = crossbar.nonidealities.Discretised(conductance_levels_370)
-    G_370 = {"G_off": conductance_levels_370[0], "G_on": conductance_levels_370[-1]}
-
-    return [
-        # MNIST
-        config.InferenceConfig(training.mnist(), None, 1),
-        config.InferenceConfig(training.mnist(), [nonideality_32], 1, **G_32),
-        config.InferenceConfig(training.mnist(), [nonideality_370], 1, **G_370),
-        # Fashion MNIST
-        config.InferenceConfig(training.fashion_mnist(), None, 1),
-        config.InferenceConfig(training.fashion_mnist(), [nonideality_32], 1, **G_32),
-        config.InferenceConfig(training.fashion_mnist(), [nonideality_370], 1, **G_370),
+    levels = [32, 128, 303, 370, 526]
+    filenames = [f"{n}-levels-retention.xlsx" for n in levels]
+    conductances_levels_lst = [
+        expdata.load.retention_conductance_levels(filename) for filename in filenames
     ]
+    nonidealities = [
+        crossbar.nonidealities.Discretised(conductance_levels)
+        for conductance_levels in conductances_levels_lst
+    ]
+    Gs = [
+        {"G_off": conductance_levels[0], "G_on": conductance_levels[-1]}
+        for conductance_levels in conductances_levels_lst
+    ]
+
+    training_setups = [training.mnist(), training.fashion_mnist()]
+
+    config_lst = []
+
+    for training_setup in training_setups:
+        config_lst.append(config.InferenceConfig(training_setup, None, 1))
+        for nonideality, G in zip(nonidealities, Gs):
+            config_lst.append(config.InferenceConfig(training_setup, [nonideality], 1, **G))
+
+    return config_lst
 
 
 def run():

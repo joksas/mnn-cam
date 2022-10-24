@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -20,22 +21,29 @@ def discretisation_boxplots():
     fig.tight_layout()
 
     configs = simulations.discretisation.configs()
+    num_sizes = len(configs) // 2
 
-    colors = [utils.color_dict()[key] for key in ["blue", "vermilion", "orange"]]
+    cmap = matplotlib.cm.get_cmap("plasma")
+    # Discrete color
+    colors = [utils.color_dict()["blue"]]
+    # Memristive colors
+    fractions = np.linspace(0.7, 0.1, num=num_sizes - 1)
+    for fraction in fractions:
+        colors.append(matplotlib.colors.rgb2hex(cmap(fraction)))
 
     boxplots = []
     for idx, config in enumerate(configs):
         accuracy = 100 * config.accuracy()
         error = 100 - accuracy
-        color = colors[idx % 3]
-        bplot = plt.boxplot(error, positions=[idx // 3 + idx], widths=[0.5], sym=color)
+        color = colors[idx % num_sizes]
+        bplot = plt.boxplot(error, positions=[idx // num_sizes + idx], widths=[0.5], sym=color)
         boxplots.append(bplot)
         plt.setp(bplot["fliers"], marker="x", markersize=2, markeredgewidth=0.5)
         for element in ["boxes", "whiskers", "fliers", "means", "medians", "caps"]:
             plt.setp(bplot[element], color=color, linewidth=0.75)
 
     axes.set_yscale("log")
-    plt.xticks([1, 5], ["MNIST", "Fashion MNIST"])
+    plt.xticks([2.5, 9.5], ["MNIST", "Fashion MNIST"])
     plt.xlabel("Dataset")
     plt.ylabel("Error (%)")
     plt.tick_params(axis="both", which="both")
@@ -43,7 +51,14 @@ def discretisation_boxplots():
     utils.add_boxplot_legend(
         axes,
         boxplots,
-        ["Digital", "Memristive (32 states)", "Memristive (370 states)"],
+        [
+            "Digital",
+            "Memristive (32 states)",
+            "Memristive (128 states)",
+            "Memristive (303 states)",
+            "Memristive (370 states)",
+            "Memristive (536 states)",
+        ],
         loc="upper left",
     )
 
