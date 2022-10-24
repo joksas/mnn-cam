@@ -67,6 +67,8 @@ class Discretised(Nonideality, LinearityPreserving):
 
     def disturb_G(self, G):
         G_1d = tf.reshape(G, [-1])
+        # It seems that previous operations may introduce small deviations outside the original range.
+        G_1d = tf.clip_by_value(G_1d, self.G_levels[0], self.G_levels[-1])
         idx = tf.searchsorted(self.G_levels, G_1d, side="left")
         idx = idx - tf.where(
             (
