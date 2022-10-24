@@ -57,7 +57,7 @@ def discretisation_boxplots():
             "Memristive (128 states)",
             "Memristive (303 states)",
             "Memristive (370 states)",
-            "Memristive (536 states)",
+            "Memristive (526 states)",
         ],
         loc="upper left",
     )
