@@ -65,6 +65,55 @@ def discretisation_boxplots():
     utils.save_fig(fig, "discretisation-boxplots")
 
 
+def lognormal_fit(low_R_data, high_R_data, mu_fit_params, sigma_fit_params):
+        low_R_resistances = [low_R_point[0] for low_R_point in low_R_data]
+        low_R_sigmas = [low_R_point[1] for low_R_point in low_R_data]
+        low_R_mus = [low_R_point[2] for low_R_point in low_R_data]
+
+        high_R_resistances = [high_R_point[0] for high_R_point in high_R_data]
+        high_R_sigmas = [high_R_point[1] for high_R_point in high_R_data]
+        high_R_mus = [high_R_point[2] for high_R_point in high_R_data]
+
+        fig, axes = plt.subplots(
+            2, 1, figsize=(TWO_COLUMNS_WIDTH, 0.75 * TWO_COLUMNS_WIDTH), sharex=True, sharey=False
+        )
+
+        axes[0].scatter(low_R_resistances, low_R_mus, color=utils.color_dict()["blue"])
+        axes[0].scatter(high_R_resistances, high_R_mus, color=utils.color_dict()["orange"])
+
+        axes[1].scatter(low_R_resistances, low_R_sigmas, color=utils.color_dict()["blue"])
+        axes[1].scatter(high_R_resistances, high_R_sigmas, color=utils.color_dict()["orange"])
+
+        full_range_x = np.linspace(1e3, 1e8, 1000)
+
+        axes[0].plot(full_range_x, mu_fit_params[0] * np.log(full_range_x) + mu_fit_params[1], color=utils.color_dict()["black"], linestyle="--")
+        axes[1].plot(full_range_x, sigma_fit_params[0] * np.log(full_range_x) + sigma_fit_params[1], color=utils.color_dict()["black"], linestyle="--")
+
+        axes[0].set_xscale("log")
+        axes[0].set_xlim([1e3, 1e8])
+
+        axes[1].set_ylim(bottom=0)
+
+        axes[0].set_ylabel("$\mu$ parameter")
+        axes[1].set_ylabel("$\sigma$ parameter")
+
+        axes[1].set_xlabel("Resistance ($\Omega$)")
+
+        # Legend
+        axes[0].legend(
+                ["LRS", "HRS"],
+                loc="center",
+                bbox_to_anchor=(0.5, 1.05),
+                frameon=False,
+                ncol=2,
+                )
+
+        fig.tight_layout()
+
+        utils.save_fig(fig, "lognormal-fit")
+
+
+
 def plot_discrete_levels(filename):
     fig, axes = plt.subplots(figsize=(ONE_COLUMN_WIDTH, 0.75 * ONE_COLUMN_WIDTH))
     fig.tight_layout()
@@ -81,6 +130,7 @@ def plot_discrete_levels(filename):
 
 
 def training():
+    NUM_EPOCHS = 2
     fig, axes = plt.subplots(
         1, 3, figsize=(TWO_COLUMNS_WIDTH, 0.4 * TWO_COLUMNS_WIDTH), sharex=True, sharey=True
     )
@@ -91,7 +141,7 @@ def training():
         simulations.training.fashion_mnist(),
     ]
     datasets = ["MNIST", "Fashion MNIST", "KMNIST"]
-    epochs = np.arange(1, 1001)
+    epochs = np.arange(1, NUM_EPOCHS + 1)
 
     colors = utils.color_dict()
     for axis, config, dataset in zip(axes, configs, datasets):
@@ -120,6 +170,6 @@ def training():
 
     axes[0].set_ylabel("Error (%)")
     axes[0].set_yscale("log")
-    axes[0].set_xlim([0, 1000])
+    axes[0].set_xlim([0, NUM_EPOCHS])
 
     utils.save_fig(fig, "training")

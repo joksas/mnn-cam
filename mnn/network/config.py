@@ -31,7 +31,7 @@ class TrainingConfig:
         batch_size: int,
         num_repeats: int,
         train_split_boundary: int = 80,
-        num_epochs: int = 1000,
+        num_epochs: int = 2,
     ) -> None:
         self.dataset: str = dataset
         self.batch_size = batch_size
@@ -116,7 +116,7 @@ class TrainingConfig:
 
         info = {
             "history": history.history,
-            **self.info(),
+            # **self.info(),
         }
 
         with open(self.info_path(), "wb") as handle:
