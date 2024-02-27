@@ -41,9 +41,9 @@ def save_fig(fig, name: str):
     dir_name = "plots"
     os.makedirs(dir_name, exist_ok=True)
     path = os.path.join(dir_name, f"{name}.pdf")
-    if os.path.exists(path):
-        logging.warning(f'File "{path}" already exists. Skipping...')
-        return
+    # if os.path.exists(path):
+    #     logging.warning(f'File "{path}" already exists. Skipping...')
+    #     return
 
     fig.savefig(path, bbox_inches="tight", transparent=True)
     logging.info(f'Saved file "{path}".')
