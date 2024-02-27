@@ -1,6 +1,11 @@
 from abc import ABC, abstractmethod
 
+import numpy as np
 import tensorflow as tf
+from scipy.stats import lognorm
+from tensorflow_probability import distributions as tfd
+
+tf.config.run_functions_eagerly(True)
 
 
 class Nonideality(ABC):
@@ -81,3 +86,31 @@ class Discretised(Nonideality, LinearityPreserving):
         G_1d = tf.gather(self.G_levels, idx)
         G = tf.reshape(G_1d, G.shape)
         return G
+
+class LognormalWithTrend(Nonideality, LinearityPreserving):
+    """Assumes that resistance states are lognormally distributed when programmed. Lognormal parameters are determined by a trend line."""
+
+    def __init__(self, mu_trend: tuple[float, float], sigma_trend: tuple[float, float]) -> None:
+        """
+        Args:
+            mu_trend: slope and intercept of the trend line of ln(R) for the mu parameter.
+            sigma_trend: slope and intercept of the trend line of ln(R) for the sigma parameter.
+        """
+        self.mu_trend = mu_trend
+        self.sigma_trend = sigma_trend
+
+    def label(self):
+        return f"lognormal-with-trend={{mu_trend={self.mu_trend},sigma_trend={self.sigma_trend}}}"
+
+    def disturb_G(self, G):
+        # Handle G = 0 case.
+        R = tf.where(G == 0, 1e-12, 1 / G)
+
+        mus = self.mu_trend[0] * tf.math.log(R) + self.mu_trend[1]
+        sigmas = self.sigma_trend[0] * tf.math.log(R) + self.sigma_trend[1]
+        sigmas = tf.where(sigmas <= 0, 1e-12, sigmas)
+
+        distribution = tfd.LogNormal(mus, sigmas)
+        new_R = distribution.sample(shape=R.shape)
+
+        return 1 / new_R

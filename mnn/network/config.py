@@ -3,6 +3,7 @@ import os
 import pickle
 import sys
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import tensorflow as tf
@@ -138,7 +139,7 @@ class InferenceConfig:
     def __init__(
         self,
         training_config: TrainingConfig,
-        nonidealities: list[crossbar.nonidealities.Nonideality],
+        nonidealities: Optional[list[crossbar.nonidealities.Nonideality]],
         num_repeats: int,
         batch_size: int = 1000,
         k_V: float = 0.5,
