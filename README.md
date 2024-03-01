@@ -4,7 +4,7 @@ Parts of the code are adapted from [this](https://github.com/joksas/nonideality-
 
 ## Requirements
 
-Python 3.9 and the packages listed in [requirements.txt](/requirements.txt).
+Python 3.11 and the packages listed in [requirements.txt](/requirements.txt).
 
 ## Reproducing results
 

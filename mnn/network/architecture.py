@@ -83,13 +83,13 @@ class MemristorDense(layers.Dense):
         I_ind = None
         for nonideality in nonidealities:
             if isinstance(nonideality, crossbar.nonidealities.LinearityNonpreserving):
-                I, I_ind = nonideality.compute_I(V, G)
+                I = nonideality.compute_I(V, G)
 
         # Ideal case for computing output currents.
-        if I is None or I_ind is None:
+        if I is None:
             I, I_ind = crossbar.ideal.compute_I_all(V, G)
 
-        if power_path is not None:
+        if power_path is not None and I_ind is not None:
             P_avg = utils.compute_avg_crossbar_power(V, I_ind)
             with open(power_path, mode="a", encoding="utf-8"):
                 tf.print(P_avg, output_stream=f"file://{power_path}")

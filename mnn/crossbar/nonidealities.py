@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
 
+import badcrossbar
 import numpy as np
 import tensorflow as tf
-from scipy.stats import lognorm
 from tensorflow_probability import distributions as tfd
-
-tf.config.run_functions_eagerly(True)
 
 
 class Nonideality(ABC):
@@ -32,12 +30,8 @@ class LinearityPreserving(ABC):
 
 
 class LinearityNonpreserving(ABC):
-    """Nonideality in which nonlinearity manifests itself in individual devices
-    and the output current of a device is a function of its conductance
-    parameter and the voltage applied across it."""
-
     @abstractmethod
-    def compute_I(self, V: tf.Tensor, G: tf.Tensor) -> tuple[tf.Tensor, tf.Tensor]:
+    def compute_I(self, V: tf.Tensor, G: tf.Tensor) -> tf.Tensor:
         """Compute currents in a crossbar suffering from linearity-nonpreserving nonideality.
 
         Args:
@@ -46,7 +40,6 @@ class LinearityNonpreserving(ABC):
 
         Returns:
             I: Output currents of shape `p x n`.
-            I_ind: Currents of shape `p x m x n` produced by each of the
                 conductances in the crossbar array.
         """
 
@@ -114,3 +107,116 @@ class LognormalWithTrend(Nonideality, LinearityPreserving):
         new_R = distribution.sample(shape=R.shape)
 
         return 1 / new_R
+
+
+class LineResistance(Nonideality, LinearityNonpreserving):
+    """Takes interconnect resistance into account."""
+
+    def __init__(self, num_word_lines: int, num_bit_lines: int, word_line_r: float, bit_line_r: float) -> None:
+        """
+        Args:
+            num_word_lines: Number of word lines.
+            num_bit_lines: Number of bit lines.
+            word_line_r: Interconnect resistance (in ohms) in word lines.
+            bit_line_r: Interconnect resistance (in ohms) in bit lines.
+        """
+        self.num_word_lines = num_word_lines
+        self.num_bit_lines = num_bit_lines
+        self.word_line_r = word_line_r
+        self.bit_line_r = bit_line_r
+
+    def k_V(self):
+        return 0.5
+
+    def label(self):
+        return f"line-resistance={{num_word_lines={self.num_word_lines},num_bit_lines={self.num_bit_lines},word_line_r={self.word_line_r:.3g},bit_line_r={self.bit_line_r:.3g}}}"
+
+    def compute_I(self, V, G):
+        R = tf.where(G == 0, 1e-12, 1 / G)
+
+        return line_resistance(R, V, self.num_word_lines, self.num_bit_lines, self.word_line_r, self.bit_line_r)
+
+def line_resistance(R: tf.Tensor, V: tf.Tensor, num_word_lines: int, num_bit_lines: int, word_line_r: float, bit_line_r: float) -> tf.Tensor:
+    """Takes interconnect resistance into account.
+
+    Args:
+        R: Resistances of shape `p x n`.
+        V: Voltages of shape `p x m`.
+        num_word_lines: Number of word lines.
+        num_bit_lines: Number of bit lines.
+        word_line_r: Interconnect resistance (in ohms) in word lines.
+        bit_line_r: Interconnect resistance (in ohms) in bit lines.
+
+    Returns:
+        Output currents of shape `p x n`.
+    """
+    crossbar_resistances = map_resistances_to_crossbars(R, num_word_lines, num_bit_lines)
+    crossbar_voltages = map_voltages_to_crossbars(tf.transpose(V), num_word_lines)
+
+    output_currents_list = []
+
+    for i in range(crossbar_resistances.shape[0]):
+        voltages = crossbar_voltages[i].numpy()
+        for j in range(crossbar_resistances.shape[1]):
+            resistances = crossbar_resistances[i, j].numpy()
+            output_currents = badcrossbar.compute(voltages, resistances, r_i_word_line=word_line_r, r_i_bit_line=bit_line_r).currents.output
+            output_currents_list.append(output_currents.astype(np.float32))
+
+    return combine_currents_from_multiple_crossbars(output_currents_list)
+
+
+def map_resistances_to_crossbars(R: tf.Tensor, num_word_lines: int, num_bit_lines: int) -> tf.Tensor:
+    """Maps resistances to crossbars. If the shape doesn't match, infinite resistances are appended.
+
+    Args:
+        R: Resistances of shape `p x n`.
+        num_word_lines: Number of word lines.
+        num_bit_lines: Number of bit lines.
+
+    Returns:
+        Crossbars in shape `num_vertical_multiplier x num_horizontal_multiplier x num_word_lines x num_bit_lines`.
+    """
+    num_horizontal_multiplier = R.shape[1] // num_bit_lines
+    num_vertical_multiplier = R.shape[0] // num_word_lines
+
+    if R.shape[0] % num_word_lines != 0:
+        R = tf.concat([R, tf.fill([num_word_lines - R.shape[0] % num_word_lines, R.shape[1]], tf.constant(np.inf, dtype=R.dtype))], axis=0)
+        num_vertical_multiplier += 1
+    if R.shape[1] % num_bit_lines != 0:
+        R = tf.concat([R, tf.fill([R.shape[0], num_bit_lines - R.shape[1] % num_bit_lines], tf.constant(np.inf, dtype=R.dtype))], axis=1)
+        num_horizontal_multiplier += 1
+
+    crossbar_resistances = tf.reshape(R, [num_vertical_multiplier, num_horizontal_multiplier, num_word_lines, num_bit_lines])
+
+    return crossbar_resistances
+
+def map_voltages_to_crossbars(V: tf.Tensor, num_word_lines: int) -> tf.Tensor:
+    """Maps voltages to crossbars. If the shape doesn't match, zero voltages are appended.
+
+    Args:
+        V: Voltages of shape `p x m`.
+        num_word_lines: Number of word lines.
+        num_bit_lines: Number of bit lines.
+
+    Returns:
+    """
+    num_vertical_multiplier = V.shape[0] // num_word_lines
+
+    if V.shape[0] % num_word_lines != 0:
+        V = tf.concat([V, tf.fill([num_word_lines - V.shape[0] % num_word_lines, tf.shape(V)[1]], tf.constant(0, dtype=V.dtype))], axis=0)
+        num_vertical_multiplier += 1
+
+    crossbar_voltages = tf.reshape(V, [num_vertical_multiplier, num_word_lines, -1])
+
+    return crossbar_voltages
+
+def combine_currents_from_multiple_crossbars(output_currents: list[tf.Tensor]) -> tf.Tensor:
+    """Combines currents from multiple crossbars.
+
+    Args:
+        output_currents: List of output currents of shape `p x n`.
+
+    Returns:
+        Combined currents of shape `p x n`.
+    """
+    return tf.reduce_sum(output_currents, axis=0)
