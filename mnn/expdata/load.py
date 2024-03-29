@@ -46,21 +46,21 @@ def c2c_data() -> list[tuple[float, float, float]]:
     lst = []
 
     for _, df in data.items():
-        df = df[(df["CH1 Source"] >= 0.506) & (df["CH1 Source"] <= 0.507)]
+        df = df[(-0.507 <= df["CH1 Source"]) & (df["CH1 Source"] <= -0.505)]
 
-        low_R_states = df.iloc[1::2, :]
-        resistances = low_R_states["CH1 Source"].values / low_R_states["CH1 Current"].values
-        avg_voltage = low_R_states["CH1 Source"].mean()
-        avg_current = low_R_states["CH1 Current"].mean()
+        low_R_states = df.iloc[::2, :]
+        resistances = np.abs(low_R_states["CH1 Source"].values / low_R_states["CH1 Current"].values)
+        avg_voltage = np.abs(low_R_states["CH1 Source"].mean())
+        avg_current = np.abs(low_R_states["CH1 Current"].mean())
         fit_params = lognorm.fit(resistances, floc=0)
         sigma = fit_params[0]
         mu = np.log(fit_params[2])
         lst.append((avg_voltage/avg_current, mu, sigma))
 
-        high_R_states = df.iloc[::2, :]
-        resistances = high_R_states["CH1 Source"].values / high_R_states["CH1 Current"].values
-        avg_voltage = high_R_states["CH1 Source"].mean()
-        avg_current = high_R_states["CH1 Current"].mean()
+        high_R_states = df.iloc[1::2, :]
+        resistances = np.abs(high_R_states["CH1 Source"].values / high_R_states["CH1 Current"].values)
+        avg_voltage = np.abs(high_R_states["CH1 Source"].mean())
+        avg_current = np.abs(high_R_states["CH1 Current"].mean())
         fit_params = lognorm.fit(resistances, floc=0)
         sigma = fit_params[0]
         mu = np.log(fit_params[2])

@@ -80,17 +80,27 @@ def discretisation_and_d2d_boxplots():
     for fraction in fractions:
         colors.append(matplotlib.colors.rgb2hex(cmap(fraction)))
 
+    errors = []  # your list of lists or 1D arrays
+
     boxplots = []
     for idx, config in enumerate(configs):
         accuracy = 100 * config.accuracy()
         error = 100 - accuracy
         color = colors[idx % num_sizes]
         error = error.flatten()
+        errors.append(error)
         bplot = plt.boxplot(error, positions=[idx // num_sizes + idx], widths=[0.5], sym=color)
         boxplots.append(bplot)
         plt.setp(bplot["fliers"], marker="x", markersize=2, markeredgewidth=0.5)
         for element in ["boxes", "whiskers", "fliers", "means", "medians", "caps"]:
             plt.setp(bplot[element], color=color, linewidth=0.75)
+
+    max_length = max(len(arr) for arr in errors)
+
+    padded_errors = [np.pad(arr, (0, max_length - len(arr)), 'constant', constant_values=0) for arr in errors]
+    errors_array = np.array(padded_errors)
+
+    np.savetxt("errors.csv", errors_array, delimiter=",")
 
     axes.set_yscale("log")
     plt.xticks([2.5, 9.5], ["MNIST", "Fashion MNIST"])
@@ -141,13 +151,13 @@ def lognormal_fit(low_R_data, high_R_data, mu_fit_params, sigma_fit_params):
         np.savetxt("high_R_sigma.csv", np.array([high_R_resistances, high_R_sigmas]).T, delimiter=",")
 
 
-        full_range_x = np.linspace(1e3, 1e8, 1000)
+        full_range_x = np.linspace(1e3, 1e11, 1000)
 
         axes[0].plot(full_range_x, mu_fit_params[0] * np.log(full_range_x) + mu_fit_params[1], color=utils.color_dict()["black"], linestyle="--")
         axes[1].plot(full_range_x, sigma_fit_params[0] * np.log(full_range_x) + sigma_fit_params[1], color=utils.color_dict()["black"], linestyle="--")
 
         axes[0].set_xscale("log")
-        axes[0].set_xlim([1e3, 1e8])
+        axes[0].set_xlim([1e3, 1e11])
 
         axes[0].set_ylim(bottom=0)
         axes[1].set_ylim(bottom=0)
