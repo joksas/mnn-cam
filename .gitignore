@@ -134,3 +134,4 @@ dmypy.json
 /models
 /_gen
 *.pdf
+/*.csv

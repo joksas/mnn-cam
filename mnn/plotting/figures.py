@@ -134,6 +134,13 @@ def lognormal_fit(low_R_data, high_R_data, mu_fit_params, sigma_fit_params):
         axes[1].scatter(low_R_resistances, low_R_sigmas, color=utils.color_dict()["blue"])
         axes[1].scatter(high_R_resistances, high_R_sigmas, color=utils.color_dict()["orange"])
 
+        # CSV 
+        np.savetxt("low_R_mu.csv", np.array([low_R_resistances, low_R_mus]).T, delimiter=",")
+        np.savetxt("high_R_mu.csv", np.array([high_R_resistances, high_R_mus]).T, delimiter=",")
+        np.savetxt("low_R_sigma.csv", np.array([low_R_resistances, low_R_sigmas]).T, delimiter=",")
+        np.savetxt("high_R_sigma.csv", np.array([high_R_resistances, high_R_sigmas]).T, delimiter=",")
+
+
         full_range_x = np.linspace(1e3, 1e8, 1000)
 
         axes[0].plot(full_range_x, mu_fit_params[0] * np.log(full_range_x) + mu_fit_params[1], color=utils.color_dict()["black"], linestyle="--")
